@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Eye, MessageCircle, Star, ThumbsUp } from "lucide-react";
 import { UserAvatar } from "@/components/forum/user-avatar";
