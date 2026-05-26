@@ -8,6 +8,38 @@
 - 权限层：Supabase Auth + RLS；后台由 `requireAdminAccess()` 统一校验 `admin/moderator`。
 - 存储层：Supabase Postgres 保存业务数据，Storage 保存头像和帖子图片；Realtime/Postgres Changes 用于私信和通知刷新。
 
+## 本地课程版架构
+
+当前分支新增一条不依赖远程 Supabase 的本地验收链路：
+
+- 表现层：`src/app/messages/page.tsx` 和 `src/components/messages/local-websocket-chat.tsx` 负责私信 UI、在线状态和发送入口。
+- 控制层：`server.mjs` 统一承接 HTTP 页面请求与 `/ws/messages` WebSocket 升级请求。
+- 服务层：`local-server/relation-policy.mjs` 实现 L0-L5 用户关系等级、陌生人首条限制和低等级链接限制。
+- DAO 层：`local-server/message-store.mjs` 读写 `.local-data/course-chat.json`，模拟本地数据库持久化。
+- 实时层：`server.mjs` 使用 `ws` 维护在线连接、Presence 和点对点消息广播。
+
+本地启动命令：
+
+```bash
+npm run dev:local
+```
+
+访问 `http://localhost:3000/messages?peer=miao` 后，页面会连接：
+
+```text
+ws://localhost:3000/ws/messages?userId=admin
+```
+
+为了兼容 legacy Java MVC 版本，本地网关同时接受：
+
+```text
+ws://localhost:3000/websocket/admin
+```
+
+旧消息格式 `{ "type": "1", "srcUser": { "userId": "admin" }, "tarUser": { "userId": "miao" }, "content": "...", "time": 1779775200000, "clientMsgId": "..." }` 会被转为统一消息模型后持久化和广播。
+
+这条链路对应课程常见的 MVC/Service/DAO/WebSocket 分层口径；生产部署仍走 Supabase Auth、RLS 和 Realtime。
+
 ## 数据流
 
 1. 页面 Server Component 调用数据层读取公开数据或当前用户数据。
@@ -16,6 +48,15 @@
 4. 写操作进入 Supabase RPC 或受 RLS 约束的表写入。
 5. 成功后 `revalidatePath()` 刷新相关页面。
 6. 私信和通知页订阅对应表的 Postgres Changes，收到变更后触发 `router.refresh()`。
+
+本地课程版私信数据流：
+
+1. 浏览器打开私信页，客户端组件建立 WebSocket 连接。
+2. `server.mjs` 根据 `userId` 读取本地 JSON 消息并下发 `init`。
+3. 浏览器发送 `send_message` 事件。
+4. `relation-policy.mjs` 校验关系等级和内容限制。
+5. `message-store.mjs` 写入 `.local-data/course-chat.json`。
+6. WebSocket 网关向发送者和接收者推送新的消息事件。
 
 ## 权限边界
 

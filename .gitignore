@@ -21,6 +21,7 @@ target/
 
 # Local development tools and database files
 .tools/
+.local-data/
 
 # Maven local build metadata
 dependency-reduced-pom.xml

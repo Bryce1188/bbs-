@@ -58,6 +58,7 @@ export type Message = {
   fromSelf: boolean;
   content: string;
   unread: number;
+  clientMsgId?: string;
   createdAt: string;
 };
 

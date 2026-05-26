@@ -73,6 +73,39 @@ http://localhost:3000
 
 未配置 Supabase 时，页面会自动使用 `src/lib/mock-data.ts` 中的演示数据，方便先看 UI 和功能路径。
 
+### 纯本地课程版：WebSocket 私信
+
+当前分支支持不配置 Supabase 的本地课程验收模式：
+
+```bash
+npm install
+npm run dev:local
+```
+
+浏览器访问：
+
+```text
+http://localhost:3000/messages?peer=miao
+```
+
+本地 WebSocket 端点：
+
+```text
+ws://localhost:3000/ws/messages?userId=admin
+```
+
+同时兼容旧课程版端点和消息格式：
+
+```text
+ws://localhost:3000/websocket/admin
+```
+
+```json
+{"type":"1","srcUser":{"userId":"admin"},"tarUser":{"userId":"miao"},"content":"你好","time":1779775200000,"clientMsgId":"demo-1"}
+```
+
+本地数据文件会自动生成在 `.local-data/course-chat.json`，该目录不会提交到 Git。私信权限按 L0-L5 用户关系等级判断：L1 陌生人只允许首条打招呼，L3 及以上才允许发送链接。
+
 ## Supabase 初始化
 
 Supabase CLI 官方推荐通过项目 devDependency 或 `npx` 使用：

@@ -4,12 +4,14 @@ import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { LocalWebSocketChat } from "@/components/messages/local-websocket-chat";
 import { PageAlert } from "@/components/ui/page-alert";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { respondFriendRequestAction, sendFriendRequestAction, sendMessageAction } from "@/app/actions";
 import { getCurrentUserId, getFriendships, getMessages, getProfiles } from "@/lib/data";
+import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
 const NOTICE_TEXT: Record<string, string> = {
@@ -33,6 +35,7 @@ export default async function MessagesPage({
   searchParams: Promise<{ peer?: string; userQ?: string; notice?: string; error?: string; draft?: string }>;
 }) {
   const { peer, userQ, notice, error, draft } = await searchParams;
+  const isLocalCourseMode = !isSupabaseConfigured();
   const [messages, profiles, friendships, currentUserId] = await Promise.all([getMessages(), getProfiles(), getFriendships(), getCurrentUserId()]);
   const peers = Array.from(new Set(messages.map((message) => message.peerId)));
   const profileIds = new Set(profiles.map((profile) => profile.id));
@@ -61,9 +64,11 @@ export default async function MessagesPage({
       {notice && NOTICE_TEXT[notice] ? <PageAlert tone="success" message={NOTICE_TEXT[notice]} /> : null}
       {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6">
-        <Badge variant="outline">Realtime</Badge>
+        <Badge variant="outline">{isLocalCourseMode ? "Local WebSocket" : "Realtime"}</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">私信中心</h1>
-        <p className="mt-2 text-sm text-muted-foreground">私信列表、好友申请和通知刷新已接入 Supabase Auth/RLS 与 Postgres Changes。</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {isLocalCourseMode ? "当前使用纯本地 WebSocket、关系等级权限和 JSON 数据文件，适合课程现场验收。" : "私信列表、好友申请和通知刷新已接入 Supabase Auth/RLS 与 Postgres Changes。"}
+        </p>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <Card className="glass-panel min-w-0 overflow-hidden">
@@ -74,19 +79,29 @@ export default async function MessagesPage({
             </form>
             {candidateProfiles.length ? (
               <div className="grid gap-2 rounded-md border bg-muted/30 p-2">
-                {candidateProfiles.map((profile) => (
-                  <form key={profile.id} action={sendFriendRequestAction} className="flex items-center justify-between gap-3 rounded-md bg-background/70 p-2">
-                    <input type="hidden" name="addresseeId" value={profile.id} />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{profile.displayName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{profile.signature}</p>
+                {candidateProfiles.map((profile) =>
+                  isLocalCourseMode ? (
+                    <div key={profile.id} className="flex items-center justify-between gap-3 rounded-md bg-background/70 p-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{profile.displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{profile.signature}</p>
+                      </div>
+                      <Badge variant="outline">本地策略</Badge>
                     </div>
-                    <SubmitButton size="sm" variant="glass" pendingText="发送中…">
-                      <UserPlus className="h-4 w-4" />
-                      添加
-                    </SubmitButton>
-                  </form>
-                ))}
+                  ) : (
+                    <form key={profile.id} action={sendFriendRequestAction} className="flex items-center justify-between gap-3 rounded-md bg-background/70 p-2">
+                      <input type="hidden" name="addresseeId" value={profile.id} />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{profile.displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{profile.signature}</p>
+                      </div>
+                      <SubmitButton size="sm" variant="glass" pendingText="发送中…">
+                        <UserPlus className="h-4 w-4" />
+                        添加
+                      </SubmitButton>
+                    </form>
+                  )
+                )}
               </div>
             ) : null}
             {pendingRequests.length ? (
@@ -161,33 +176,42 @@ export default async function MessagesPage({
           </CardContent>
         </Card>
         <Card className="glass-panel min-h-[520px] min-w-0 overflow-hidden">
-          <CardContent className="flex h-full flex-col p-5">
-            <div className="border-b pb-4">
-              <h2 className="font-semibold">{activePeer ? `与 ${activePeer.displayName} 的会话` : "选择一条会话"}</h2>
-              <p className="text-xs text-muted-foreground">在线状态由 Realtime Presence 提供</p>
-            </div>
-            <div className="flex-1 space-y-4 py-5">
-              {activeMessages.length ? activeMessages.map((message) => (
-                <div key={message.id} className={`flex ${message.fromSelf ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[78%] rounded-lg p-3 text-sm leading-6 ${message.fromSelf ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                    {message.content}
-                    <p className="mt-1 text-[11px] opacity-70">{formatDate(message.createdAt)}</p>
+          {isLocalCourseMode ? (
+            <LocalWebSocketChat
+              currentUserId={currentUserId ?? "admin"}
+              profiles={profiles}
+              initialMessages={messages}
+              activePeerId={activePeerId}
+            />
+          ) : (
+            <CardContent className="flex h-full flex-col p-5">
+              <div className="border-b pb-4">
+                <h2 className="font-semibold">{activePeer ? `与 ${activePeer.displayName} 的会话` : "选择一条会话"}</h2>
+                <p className="text-xs text-muted-foreground">在线状态由 Realtime Presence 提供</p>
+              </div>
+              <div className="flex-1 space-y-4 py-5">
+                {activeMessages.length ? activeMessages.map((message) => (
+                  <div key={message.id} className={`flex ${message.fromSelf ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[78%] rounded-lg p-3 text-sm leading-6 ${message.fromSelf ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                      {message.content}
+                      <p className="mt-1 text-[11px] opacity-70">{formatDate(message.createdAt)}</p>
+                    </div>
                   </div>
-                </div>
-              )) : (
-                <p className="text-sm text-muted-foreground">暂无可展示的消息。</p>
-              )}
-            </div>
-            <form action={sendMessageAction} className="grid gap-3">
-              <input type="hidden" name="receiverId" value={activePeerId ?? ""} />
-              <label htmlFor="message-content" className="sr-only">输入私信内容</label>
-              <Textarea id="message-content" name="content" placeholder="输入私信内容" defaultValue={draft ?? ""} />
-              <SubmitButton disabled={!activePeerId} className="justify-self-end" pendingText="发送中…">
-                <SendHorizontal className="h-4 w-4" />
-                发送
-              </SubmitButton>
-            </form>
-          </CardContent>
+                )) : (
+                  <p className="text-sm text-muted-foreground">暂无可展示的消息。</p>
+                )}
+              </div>
+              <form action={sendMessageAction} className="grid gap-3">
+                <input type="hidden" name="receiverId" value={activePeerId ?? ""} />
+                <label htmlFor="message-content" className="sr-only">输入私信内容</label>
+                <Textarea id="message-content" name="content" placeholder="输入私信内容" defaultValue={draft ?? ""} />
+                <SubmitButton disabled={!activePeerId} className="justify-self-end" pendingText="发送中…">
+                  <SendHorizontal className="h-4 w-4" />
+                  发送
+                </SubmitButton>
+              </form>
+            </CardContent>
+          )}
         </Card>
       </div>
     </section>
