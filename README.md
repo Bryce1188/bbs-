@@ -164,14 +164,4 @@ npm audit --audit-level=moderate
 
 旧 Java 版本可在 `legacy-java-mvc` 分支继续使用 Maven/Tomcat 验证。
 
-## 注意事项
 
-- Supabase 是 Postgres，不是 MySQL。课程报告中需要明确“双轨交付”原因。
-- 不迁移旧系统中的明文密码；旧账号应导入 profile 后通过 Supabase Auth 重置密码。
-- 邮件、数据库、Storage 等密钥只写入环境变量，不提交到仓库。
-- `/admin` 采用 fail-closed；未配置 Supabase 或未登录管理员账号时不会放行。仅本地演示可显式设置 `ADMIN_DEMO_MODE=true` 展示 mock 后台。
-- `bootstrap_admin_by_email` 仅用于首次初始化管理员，迁移已显式撤销 `anon/authenticated` 执行权限。
-- 公共资料读取走 `public_profiles` 视图，避免普通页面直接暴露 `profiles.role`。
-- Storage 公开桶只允许 PNG/JPEG/WebP/GIF 等图片 MIME，头像桶不接受 SVG 上传。
-- 每次修改 `supabase/migrations` 后运行 `npm run supabase:types`，保持 `src/lib/supabase/database.types.ts` 与真实 schema 同步。
-- 完整生产化前还需要补充 Playwright E2E、邮件模板和上传签名 URL。
