@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Eye, MessageCircle, Star, ThumbsUp } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Board, Post, Profile } from "@/lib/types";
@@ -28,9 +28,7 @@ export function PostCard({ post, author, board }: { post: Post; author: Profile;
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{post.excerpt}</p>
           </div>
           <div className="flex items-center gap-3 md:min-w-44">
-            <Avatar>
-              <AvatarFallback>{author.displayName.slice(0, 1)}</AvatarFallback>
-            </Avatar>
+            <UserAvatar displayName={author.displayName} avatar={author.avatar} />
             <div>
               <p className="text-sm font-medium">{author.displayName}</p>
               <p className="text-xs text-muted-foreground">{formatDate(post.updatedAt)}</p>

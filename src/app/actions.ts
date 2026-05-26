@@ -176,7 +176,7 @@ export async function createReplyAction(formData: FormData) {
 
   if (error) redirect(`${path}?error=reply_failed`);
   revalidatePath(path);
-  redirect(path);
+  redirect(`${path}?notice=reply_created`);
 }
 
 const postInteractionSchema = z.object({
@@ -189,14 +189,14 @@ export async function togglePostLikeAction(formData: FormData) {
 
   const path = `/posts/${parsed.data.postId}`;
   const { supabase } = await getCurrentUserOrRedirect(path);
-  const { error } = await supabase.rpc("toggle_post_reaction", {
+  const { data, error } = await supabase.rpc("toggle_post_reaction", {
     target_post_id: parsed.data.postId,
     target_reaction: "like"
   });
 
   if (error) redirect(`${path}?error=like_failed`);
   revalidatePath(path);
-  redirect(path);
+  redirect(`${path}?notice=${data ? "like_added" : "like_removed"}`);
 }
 
 export async function toggleBookmarkAction(formData: FormData) {
@@ -205,13 +205,13 @@ export async function toggleBookmarkAction(formData: FormData) {
 
   const path = `/posts/${parsed.data.postId}`;
   const { supabase } = await getCurrentUserOrRedirect(path);
-  const { error } = await supabase.rpc("toggle_bookmark", {
+  const { data, error } = await supabase.rpc("toggle_bookmark", {
     target_post_id: parsed.data.postId
   });
 
   if (error) redirect(`${path}?error=bookmark_failed`);
   revalidatePath(path);
-  redirect(path);
+  redirect(`${path}?notice=${data ? "bookmark_added" : "bookmark_removed"}`);
 }
 
 const reportSchema = z.object({
@@ -236,7 +236,7 @@ export async function createReportAction(formData: FormData) {
 
   if (error) redirect(`${path}?error=report_failed`);
   revalidatePath("/admin/reports");
-  redirect(`${path}?reported=1`);
+  redirect(`${path}?notice=report_submitted`);
 }
 
 const messageSchema = z.object({
@@ -260,7 +260,7 @@ export async function sendMessageAction(formData: FormData) {
 
   if (error) redirect(`/messages?peer=${parsed.data.receiverId}&error=send_failed`);
   revalidatePath("/messages");
-  redirect(`/messages?peer=${parsed.data.receiverId}`);
+  redirect(`/messages?peer=${parsed.data.receiverId}&notice=message_sent`);
 }
 
 export async function markAllNotificationsReadAction() {
@@ -268,7 +268,7 @@ export async function markAllNotificationsReadAction() {
   const { error } = await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
   if (error) redirect("/notifications?error=mark_failed");
   revalidatePath("/notifications");
-  redirect("/notifications");
+  redirect("/notifications?notice=all_read");
 }
 
 const boardAdminSchema = z.object({
@@ -493,7 +493,7 @@ export async function sendFriendRequestAction(formData: FormData) {
   );
   if (error) redirect("/messages?error=friend_failed");
   revalidatePath("/messages");
-  redirect(`/messages?peer=${parsed.data.addresseeId}`);
+  redirect(`/messages?peer=${parsed.data.addresseeId}&notice=friend_requested`);
 }
 
 export async function respondFriendRequestAction(formData: FormData) {
@@ -513,5 +513,5 @@ export async function respondFriendRequestAction(formData: FormData) {
     .eq("addressee_id", user.id);
   if (error) redirect("/messages?error=friend_failed");
   revalidatePath("/messages");
-  redirect("/messages");
+  redirect(`/messages?notice=friend_${parsed.data.status}`);
 }

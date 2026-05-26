@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { BoardCard } from "@/components/forum/board-card";
 import { PostCard } from "@/components/forum/post-card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,9 +79,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               <Link key={profile.id} href={`/profile/${profile.id}`}>
                 <Card className="glass-panel h-full transition hover:border-primary/45">
                   <CardContent className="flex items-center gap-3 p-5">
-                    <Avatar>
-                      <AvatarFallback>{profile.displayName.slice(0, 1)}</AvatarFallback>
-                    </Avatar>
+                    <UserAvatar displayName={profile.displayName} avatar={profile.avatar} />
                     <div className="min-w-0">
                       <h2 className="truncate font-semibold">{profile.displayName}</h2>
                       <p className="truncate text-xs text-muted-foreground">{profile.level}</p>

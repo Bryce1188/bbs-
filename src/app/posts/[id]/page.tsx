@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Flag, MessageSquarePlus, Star, ThumbsUp } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageAlert } from "@/components/ui/page-alert";
 import { Separator } from "@/components/ui/separator";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,15 +12,40 @@ import { createReplyAction, createReportAction, toggleBookmarkAction, togglePost
 import { getAnonymousProfile, getPost } from "@/lib/data";
 import { formatDate, formatNumber } from "@/lib/utils";
 
-export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
+const NOTICE_TEXT: Record<string, string> = {
+  reply_created: "回复已发布。",
+  like_added: "已点赞。",
+  like_removed: "已取消点赞。",
+  bookmark_added: "已加入收藏。",
+  bookmark_removed: "已取消收藏。",
+  report_submitted: "举报已提交，管理员会尽快处理。"
+};
+
+const ERROR_TEXT: Record<string, string> = {
+  reply_failed: "回复提交失败，请稍后重试。",
+  like_failed: "点赞操作失败，请稍后重试。",
+  bookmark_failed: "收藏操作失败，请稍后重试。",
+  report_failed: "举报提交失败，请稍后重试。"
+};
+
+export default async function PostDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string; notice?: string }>;
+}) {
   const { id } = await params;
+  const { error, notice } = await searchParams;
   const detail = await getPost(id);
   if (!detail?.board) notFound();
 
-  const { post, author, board, replies, profiles } = detail;
+  const { post, author, board, replies, profiles, viewerHasLiked, viewerHasBookmarked } = detail;
 
   return (
     <section className="section-shell">
+      {notice && NOTICE_TEXT[notice] ? <PageAlert tone="success" message={NOTICE_TEXT[notice]} /> : null}
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <Card className="glass-panel overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -33,9 +59,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           <h1 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight tracking-normal">{post.title}</h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarFallback>{author.displayName.slice(0, 1)}</AvatarFallback>
-              </Avatar>
+              <UserAvatar displayName={author.displayName} avatar={author.avatar} />
               <div>
                 <Link href={`/profile/${author.id}`} className="text-sm font-medium hover:text-primary">
                   {author.displayName}
@@ -47,14 +71,14 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
               <form action={togglePostLikeAction}>
                 <input type="hidden" name="postId" value={post.id} />
                 <SubmitButton variant="glass" size="sm" pendingText="处理中…">
-                  <ThumbsUp className="h-4 w-4" />
+                  <ThumbsUp className={`h-4 w-4 ${viewerHasLiked ? "fill-current" : ""}`} />
                   {formatNumber(post.likeCount)}
                 </SubmitButton>
               </form>
               <form action={toggleBookmarkAction}>
                 <input type="hidden" name="postId" value={post.id} />
                 <SubmitButton variant="glass" size="sm" pendingText="处理中…">
-                  <Star className="h-4 w-4" />
+                  <Star className={`h-4 w-4 ${viewerHasBookmarked ? "fill-current" : ""}`} />
                   收藏
                 </SubmitButton>
               </form>
@@ -85,9 +109,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
               <Card key={reply.id} className="glass-panel">
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
-                    <Avatar>
-                      <AvatarFallback>{replyAuthor.displayName.slice(0, 1)}</AvatarFallback>
-                    </Avatar>
+                    <UserAvatar displayName={replyAuthor.displayName} avatar={replyAuthor.avatar} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <span className="font-medium">{replyAuthor.displayName}</span>

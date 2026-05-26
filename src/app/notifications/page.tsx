@@ -1,18 +1,30 @@
 import { BellRing, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageAlert } from "@/components/ui/page-alert";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { markAllNotificationsReadAction } from "@/app/actions";
 import { getNotifications } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
-export default async function NotificationsPage() {
+const NOTICE_TEXT: Record<string, string> = {
+  all_read: "通知已全部标记为已读。"
+};
+
+const ERROR_TEXT: Record<string, string> = {
+  mark_failed: "标记已读失败，请稍后重试。"
+};
+
+export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ notice?: string; error?: string }> }) {
+  const { notice, error } = await searchParams;
   const notifications = await getNotifications();
 
   return (
     <section className="section-shell">
       <RealtimeRefresh table="notifications" />
+      {notice && NOTICE_TEXT[notice] ? <PageAlert tone="success" message={NOTICE_TEXT[notice]} /> : null}
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <Badge variant="outline">通知</Badge>

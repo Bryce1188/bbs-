@@ -1,7 +1,7 @@
 import { CalendarDays, Mail, MessageSquare, UserPlus } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PostCard } from "@/components/forum/post-card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,9 +17,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     <section className="section-shell">
       <Card className="glass-panel overflow-hidden">
         <CardContent className="grid gap-6 p-6 md:grid-cols-[auto_1fr_auto] md:items-center">
-          <Avatar className="h-24 w-24">
-            <AvatarFallback className="text-3xl">{profile.displayName.slice(0, 1)}</AvatarFallback>
-          </Avatar>
+          <UserAvatar displayName={profile.displayName} avatar={profile.avatar} className="h-24 w-24" fallbackClassName="text-3xl" />
           <div>
             <Badge variant={profile.role === "admin" ? "teal" : "outline"}>{profile.role}</Badge>
             <h1 className="mt-3 text-3xl font-semibold tracking-normal">{profile.displayName}</h1>

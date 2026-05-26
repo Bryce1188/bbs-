@@ -1,9 +1,10 @@
 import { Check, SendHorizontal, UserPlus, X } from "lucide-react";
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageAlert } from "@/components/ui/page-alert";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,8 +12,27 @@ import { respondFriendRequestAction, sendFriendRequestAction, sendMessageAction 
 import { getCurrentUserId, getFriendships, getMessages, getProfiles } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
-export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ peer?: string; userQ?: string }> }) {
-  const { peer, userQ } = await searchParams;
+const NOTICE_TEXT: Record<string, string> = {
+  message_sent: "消息已发送。",
+  friend_requested: "好友申请已发送。",
+  friend_accepted: "已通过好友申请。",
+  friend_rejected: "已拒绝好友申请。"
+};
+
+const ERROR_TEXT: Record<string, string> = {
+  invalid_message: "消息内容无效，请检查后重试。",
+  send_failed: "消息发送失败，请稍后重试。",
+  invalid_friend: "好友操作参数无效。",
+  self_friend: "不能向自己发送好友申请。",
+  friend_failed: "好友操作失败，请稍后重试。"
+};
+
+export default async function MessagesPage({
+  searchParams
+}: {
+  searchParams: Promise<{ peer?: string; userQ?: string; notice?: string; error?: string }>;
+}) {
+  const { peer, userQ, notice, error } = await searchParams;
   const [messages, profiles, friendships, currentUserId] = await Promise.all([getMessages(), getProfiles(), getFriendships(), getCurrentUserId()]);
   const peers = Array.from(new Set(messages.map((message) => message.peerId)));
   const profileIds = new Set(profiles.map((profile) => profile.id));
@@ -38,6 +58,8 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   return (
     <section className="section-shell">
       <RealtimeRefresh table="private_messages" />
+      {notice && NOTICE_TEXT[notice] ? <PageAlert tone="success" message={NOTICE_TEXT[notice]} /> : null}
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6">
         <Badge variant="outline">Realtime</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">私信中心</h1>
@@ -123,9 +145,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
                   href={`/messages?peer=${peerId}`}
                   className={`flex items-center gap-3 rounded-md p-3 transition hover:bg-muted/70 ${peerId === activePeerId ? "bg-muted/70" : ""}`}
                 >
-                  <Avatar>
-                    <AvatarFallback>{peer.displayName.slice(0, 1)}</AvatarFallback>
-                  </Avatar>
+                  <UserAvatar displayName={peer.displayName} avatar={peer.avatar} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-sm font-medium">{peer.displayName}</p>

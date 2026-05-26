@@ -150,6 +150,11 @@ function throwDataError(scope: string, error: { message: string }): never {
   throw new Error(`${scope}: ${error.message}`);
 }
 
+function resolveAvatarPath(path: string | null | undefined) {
+  const value = String(path ?? "").trim();
+  return value.length ? value : "/avatars/placeholder-user.svg";
+}
+
 function mapBoard(item: BoardRow): Board {
   return {
     id: item.id,
@@ -170,7 +175,7 @@ function mapProfile(item: ProfileRow): Profile {
     id: item.id,
     username: item.username,
     displayName: item.display_name,
-    avatar: item.avatar_path ?? "/avatars/member-a.svg",
+    avatar: resolveAvatarPath(item.avatar_path),
     role: item.role,
     level: item.level_name,
     points: item.points,
@@ -184,7 +189,7 @@ function mapPublicProfile(item: PublicProfileRow): Profile {
     id: item.id,
     username: item.username,
     displayName: item.display_name,
-    avatar: item.avatar_path ?? "/avatars/member-a.svg",
+    avatar: resolveAvatarPath(item.avatar_path),
     role: "member",
     level: item.level_name,
     points: item.points,
@@ -229,7 +234,7 @@ export function getAnonymousProfile(): Profile {
     id: "deleted",
     username: "deleted",
     displayName: "已注销用户",
-    avatar: "/avatars/member-a.svg",
+    avatar: "/avatars/placeholder-user.svg",
     role: "member",
     level: "Lv.1 新人",
     points: 0,
@@ -396,7 +401,9 @@ export async function getPost(id: string | number) {
       author: profileList.find((profile) => profile.id === post.authorId) ?? getAnonymousProfile(),
       board: boardList.find((board) => board.id === post.boardId),
       replies: fallback(replies.filter((reply) => reply.postId === post.id && reply.visible)),
-      profiles: profileList
+      profiles: profileList,
+      viewerHasLiked: false,
+      viewerHasBookmarked: false
     };
   }
 
@@ -408,13 +415,37 @@ export async function getPost(id: string | number) {
   if (!data) return undefined;
 
   const post = mapPost(data as PostRow);
-  const [profileList, boardList, replyList] = await Promise.all([getProfiles(), getBoards(), getPostReplies(post.id)]);
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  const [profileList, boardList, replyList, likeResult, bookmarkResult] = await Promise.all([
+    getProfiles(),
+    getBoards(),
+    getPostReplies(post.id),
+    user
+      ? supabase
+          .from("post_reactions")
+          .select("id", { count: "exact", head: true })
+          .eq("post_id", post.id)
+          .eq("user_id", user.id)
+          .eq("reaction", "like")
+      : Promise.resolve({ count: 0, error: null }),
+    user
+      ? supabase.from("bookmarks").select("id", { count: "exact", head: true }).eq("post_id", post.id).eq("user_id", user.id)
+      : Promise.resolve({ count: 0, error: null })
+  ]);
+  if (likeResult.error) throwDataError("读取点赞状态失败", likeResult.error);
+  if (bookmarkResult.error) throwDataError("读取收藏状态失败", bookmarkResult.error);
+
   return {
     post,
     author: profileList.find((profile) => profile.id === post.authorId) ?? getAnonymousProfile(),
     board: boardList.find((board) => board.id === post.boardId),
     replies: replyList,
-    profiles: profileList
+    profiles: profileList,
+    viewerHasLiked: (likeResult.count ?? 0) > 0,
+    viewerHasBookmarked: (bookmarkResult.count ?? 0) > 0
   };
 }
 
