@@ -34,14 +34,20 @@ export function ThreeBackground() {
     const camera = new THREE.PerspectiveCamera(60, width / height, 1, 1000);
     camera.position.z = 300;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-      powerPreference: "high-performance",
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    } catch (e) {
+      console.warn("WebGL not supported by this browser/device:", e);
+      return;
+    }
 
     // Particle Texture Generator (Smooth Circle)
     const createParticleTexture = () => {
