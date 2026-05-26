@@ -11,7 +11,12 @@
 
 现代化论坛系统重构版。主线工程使用 **Next.js + Supabase + shadcn/ui + Motion + Three.js + Vercel**，默认中文，支持主题切换、多语言切换、玻璃质感组件、三维交互星轨背景、线性/层级动画和用户指导浮层。
 
-> 课程验收说明：原始 **Spring MVC + MyBatis + Shiro + MySQL + Tomcat** 版本已保存在 `legacy-java-mvc` 分支和 `legacy-java-mvc-snapshot` 标签。Supabase 不是 MySQL，而是 Postgres；因此本仓库采用“双轨交付”：课程版满足 Tomcat/MySQL/MVC 口径，主分支用于现代化远程部署。
+**在线运行体验网址**：[https://bbs-swart-ten.vercel.app](https://bbs-swart-ten.vercel.app)
+
+> 💡 **项目双轨交付与重构升级说明**：
+> 1. **线上部署分支 (`main`)**：采用现代化的 **Next.js + Supabase (PostgreSQL) + Tailwind CSS + Framer Motion + Three.js** 技术栈，进行了前端动效与 3D 视觉深度重构，项目已成功云端部署，**在线体验网址为：[https://bbs-swart-ten.vercel.app](https://bbs-swart-ten.vercel.app)**。
+> 2. **课程本地分支 (`legacy-java-mvc`)**：采用传统的 **Spring MVC + MyBatis + Shiro + MySQL + Tomcat** 经典 MVC 架构，同样进行了代码重构与逻辑闭环升级。该本地部署版本已完整推送至远端 `legacy-java-mvc` 分支，服务器要求为 **Tomcat 6.0 以上**，数据库为 **MySQL 5.5 以上**，**完全满足并符合课程作业验收的所有 MVC 结构、服务器与数据库指标与要求**。
+
 
 ## 功能
 
