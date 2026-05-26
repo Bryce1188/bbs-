@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen overflow-hidden">
       <NavigationProgress />
       <ThreeBackground />
-      <div className="fixed inset-0 -z-10 line-grid bg-[linear-gradient(180deg,hsl(var(--background)/0.6),hsl(var(--muted)/0.2),hsl(var(--background)/0.6))]" />
+      <div className="fixed inset-0 -z-10 line-grid backdrop-blur-[3.5px] bg-[linear-gradient(180deg,hsl(var(--background)/0.55),hsl(var(--muted)/0.15),hsl(var(--background)/0.55))]" />
       <div className="fixed left-0 right-0 top-0 z-40 border-b bg-background/75 backdrop-blur-xl md:backdrop-blur-2xl">
         <div className="container flex h-16 items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-3">
