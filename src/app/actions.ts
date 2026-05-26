@@ -5,6 +5,22 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdminAccess } from "@/lib/admin";
+import {
+  assignLocalRole,
+  createLocalPost,
+  createLocalReply,
+  createPasswordResetCodeLocal,
+  deleteLocalPost,
+  signInLocal,
+  signOutLocal,
+  signUpLocal,
+  toggleLocalBookmark,
+  toggleLocalLike,
+  updateLocalBoard,
+  updateLocalPostStatus,
+  updateLocalProfile,
+  updatePasswordWithCodeLocal
+} from "@/lib/local-db";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function text(value: FormDataEntryValue | null) {
@@ -52,6 +68,13 @@ export async function signInAction(formData: FormData) {
   if (!parsed.success) redirect("/auth?error=invalid_credentials");
   const next = safeNextPath(text(formData.get("next")) || "/");
 
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const ok = await signInLocal(parsed.data.account, parsed.data.password);
+    if (!ok) redirect("/auth?error=sign_in_failed");
+    redirect(next);
+  }
+
   const supabase = await getSupabaseOrRedirect("/auth");
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.data.account,
@@ -63,11 +86,19 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function signUpAction(formData: FormData) {
-  const parsed = authSchema.safeParse({
+  const parsed = authSchema.extend({ displayName: z.string().min(1).max(40) }).safeParse({
+    displayName: text(formData.get("displayName")),
     account: text(formData.get("account")),
     password: text(formData.get("password"))
   });
   if (!parsed.success) redirect("/auth?error=invalid_credentials");
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const result = await signUpLocal(parsed.data.displayName, parsed.data.account, parsed.data.password);
+    if (!result.ok) redirect(`/auth?error=${result.code}`);
+    redirect("/auth?created=1");
+  }
 
   const supabase = await getSupabaseOrRedirect("/auth");
   const { error } = await supabase.rpc("register_confirmed_user", {
@@ -89,6 +120,13 @@ export async function requestPasswordResetAction(formData: FormData) {
   });
   if (!parsed.success) redirect("/auth/reset?error=invalid_email");
 
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const code = await createPasswordResetCodeLocal(parsed.data.account);
+    if (!code) redirect("/auth/reset?error=email_not_found");
+    redirect(`/auth/reset?sent=1&code=${code}&account=${encodeURIComponent(parsed.data.account)}`);
+  }
+
   const supabase = await getSupabaseOrRedirect("/auth/reset");
   const origin = await getRequestOrigin();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.account, {
@@ -100,17 +138,29 @@ export async function requestPasswordResetAction(formData: FormData) {
 }
 
 const passwordUpdateSchema = z.object({
+  account: z.string().email().optional(),
+  code: z.string().min(4).max(12).optional(),
   password: z.string().min(6).max(128),
   confirmPassword: z.string().min(6).max(128)
 });
 
 export async function updatePasswordAction(formData: FormData) {
   const parsed = passwordUpdateSchema.safeParse({
+    account: text(formData.get("account")) || undefined,
+    code: text(formData.get("code")) || undefined,
     password: text(formData.get("password")),
     confirmPassword: text(formData.get("confirmPassword"))
   });
   if (!parsed.success || parsed.data.password !== parsed.data.confirmPassword) {
     redirect("/auth/reset?error=password_mismatch");
+  }
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    if (!parsed.data.account || !parsed.data.code) redirect("/auth/reset?error=invalid_code");
+    const ok = await updatePasswordWithCodeLocal(parsed.data.account, parsed.data.code, parsed.data.password);
+    if (!ok) redirect("/auth/reset?error=invalid_code");
+    redirect("/auth?reset=1");
   }
 
   const { supabase } = await getCurrentUserOrRedirect("/auth/reset");
@@ -134,6 +184,20 @@ export async function createPostAction(formData: FormData) {
     tags: text(formData.get("tags"))
   });
   if (!parsed.success) redirect("/publish?error=invalid_post");
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const tags = (parsed.data.tags ?? "")
+      .split(/[,，\s]+/)
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    const id = await createLocalPost(parsed.data.boardId, parsed.data.title, parsed.data.content, tags);
+    if (!id) redirect("/auth?next=/publish");
+    revalidatePath("/");
+    revalidatePath("/boards");
+    redirect(`/posts/${id}`);
+  }
 
   const { supabase } = await getCurrentUserOrRedirect("/publish");
   const tags = (parsed.data.tags ?? "")
@@ -168,6 +232,14 @@ export async function createReplyAction(formData: FormData) {
   if (!parsed.success) redirect("/");
 
   const path = `/posts/${parsed.data.postId}`;
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const ok = await createLocalReply(parsed.data.postId, parsed.data.content);
+    if (!ok) redirect(`/auth?next=${encodeURIComponent(path)}`);
+    revalidatePath(path);
+    redirect(`${path}?notice=reply_created`);
+  }
+
   const { supabase } = await getCurrentUserOrRedirect(path);
   const { error } = await supabase.rpc("create_reply", {
     target_post_id: parsed.data.postId,
@@ -188,6 +260,14 @@ export async function togglePostLikeAction(formData: FormData) {
   if (!parsed.success) redirect("/");
 
   const path = `/posts/${parsed.data.postId}`;
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const data = await toggleLocalLike(parsed.data.postId);
+    if (data === null) redirect(`/auth?next=${encodeURIComponent(path)}`);
+    revalidatePath(path);
+    redirect(`${path}?notice=${data ? "like_added" : "like_removed"}`);
+  }
+
   const { supabase } = await getCurrentUserOrRedirect(path);
   const { data, error } = await supabase.rpc("toggle_post_reaction", {
     target_post_id: parsed.data.postId,
@@ -204,6 +284,14 @@ export async function toggleBookmarkAction(formData: FormData) {
   if (!parsed.success) redirect("/");
 
   const path = `/posts/${parsed.data.postId}`;
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const data = await toggleLocalBookmark(parsed.data.postId);
+    if (data === null) redirect(`/auth?next=${encodeURIComponent(path)}`);
+    revalidatePath(path);
+    redirect(`${path}?notice=${data ? "bookmark_added" : "bookmark_removed"}`);
+  }
+
   const { supabase } = await getCurrentUserOrRedirect(path);
   const { data, error } = await supabase.rpc("toggle_bookmark", {
     target_post_id: parsed.data.postId
@@ -227,6 +315,9 @@ export async function createReportAction(formData: FormData) {
   if (!parsed.success) redirect("/");
 
   const path = `/posts/${parsed.data.postId}`;
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) redirect(`${path}?notice=report_submitted`);
+
   const { supabase, user } = await getCurrentUserOrRedirect(path);
   const { error } = await supabase.from("reports").insert({
     post_id: parsed.data.postId,
@@ -279,6 +370,9 @@ export async function sendMessageAction(formData: FormData) {
 }
 
 export async function markAllNotificationsReadAction() {
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) redirect("/notifications?notice=all_read");
+
   const { supabase, user } = await getCurrentUserOrRedirect("/notifications");
   const { error } = await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
   if (error) redirect("/notifications?error=mark_failed");
@@ -308,6 +402,22 @@ export async function updateBoardAction(formData: FormData) {
     sortOrder: formData.get("sortOrder")
   });
   if (!parsed.success) redirect("/admin/boards?error=invalid_board");
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    await updateLocalBoard({
+      id: parsed.data.boardId,
+      name: parsed.data.name,
+      group: parsed.data.group,
+      description: parsed.data.description,
+      icon: parsed.data.icon,
+      themeColor: parsed.data.themeColor,
+      sortOrder: parsed.data.sortOrder
+    });
+    revalidatePath("/admin/boards");
+    revalidatePath("/boards");
+    redirect("/admin/boards");
+  }
 
   const supabase = await getSupabaseOrRedirect("/admin/boards");
   const { error } = await supabase
@@ -399,6 +509,13 @@ export async function updatePostStatusAction(formData: FormData) {
     .safeParse({ postId: formData.get("postId"), status: text(formData.get("status")) });
   if (!parsed.success) redirect("/admin/posts?error=invalid_post");
 
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    await updateLocalPostStatus(parsed.data.postId, parsed.data.status);
+    revalidatePath("/admin/posts");
+    redirect("/admin/posts");
+  }
+
   const supabase = await getSupabaseOrRedirect("/admin/posts");
   const { error } = await supabase.from("posts").update({ status: parsed.data.status, updated_at: new Date().toISOString() }).eq("id", parsed.data.postId);
   if (error) redirect("/admin/posts?error=update_failed");
@@ -410,11 +527,18 @@ export async function assignUserRoleAction(formData: FormData) {
   await requireAdminAccess();
   const parsed = z
     .object({
-      userId: z.string().uuid(),
+      userId: z.string().min(1),
       role: z.enum(["admin", "moderator", "member"])
     })
     .safeParse({ userId: text(formData.get("userId")), role: text(formData.get("role")) });
   if (!parsed.success) redirect("/admin/users?error=invalid_role");
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    await assignLocalRole(parsed.data.userId, parsed.data.role);
+    revalidatePath("/admin/users");
+    redirect("/admin/users");
+  }
 
   const supabase = await getSupabaseOrRedirect("/admin/users");
   const { error } = await supabase.from("profiles").update({ role: parsed.data.role }).eq("id", parsed.data.userId);
@@ -529,4 +653,52 @@ export async function respondFriendRequestAction(formData: FormData) {
   if (error) redirect("/messages?error=friend_failed");
   revalidatePath("/messages");
   redirect(`/messages?notice=friend_${parsed.data.status}`);
+}
+
+export async function signOutAction() {
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) {
+    await signOutLocal();
+    redirect("/auth");
+  }
+  await supabase.auth.signOut();
+  redirect("/auth");
+}
+
+export async function updateProfileAction(formData: FormData) {
+  const parsed = z
+    .object({
+      displayName: z.string().min(1).max(40),
+      signature: z.string().max(160)
+    })
+    .safeParse({
+      displayName: text(formData.get("displayName")),
+      signature: text(formData.get("signature"))
+    });
+  if (!parsed.success) redirect("/auth?error=invalid_profile");
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const ok = await updateLocalProfile(parsed.data.displayName, parsed.data.signature);
+    if (!ok) redirect("/auth");
+    revalidatePath("/profile");
+    redirect("/auth?notice=profile_updated");
+  }
+  redirect("/auth?error=profile_requires_local");
+}
+
+export async function deletePostAction(formData: FormData) {
+  const parsed = postInteractionSchema.safeParse({ postId: formData.get("postId") });
+  if (!parsed.success) redirect("/");
+  const path = `/posts/${parsed.data.postId}`;
+
+  const supabaseMaybe = await getSupabaseServerClient();
+  if (!supabaseMaybe) {
+    const ok = await deleteLocalPost(parsed.data.postId);
+    if (!ok) redirect(`${path}?error=delete_failed`);
+    revalidatePath("/");
+    revalidatePath("/boards");
+    redirect("/boards");
+  }
+  redirect(`${path}?error=delete_failed`);
 }

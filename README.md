@@ -75,10 +75,11 @@ http://localhost:3000
 
 ### 纯本地课程版：WebSocket 私信
 
-当前分支支持不配置 Supabase 的本地课程验收模式：
+当前分支支持不配置 Supabase 的本地课程验收模式，默认使用本地 MySQL：
 
 ```bash
 npm install
+npm run db:local:init
 npm run dev:local
 ```
 
@@ -104,7 +105,25 @@ ws://localhost:3000/websocket/admin
 {"type":"1","srcUser":{"userId":"admin"},"tarUser":{"userId":"miao"},"content":"你好","time":1779775200000,"clientMsgId":"demo-1"}
 ```
 
-本地数据文件会自动生成在 `.local-data/course-chat.json`，该目录不会提交到 Git。私信权限按 L0-L5 用户关系等级判断：L1 陌生人只允许首条打招呼，L3 及以上才允许发送链接。
+本地数据库默认连接 `bbs_course`，应用账号为 `bbs_app / xzr1234567`。如果本机没有可用 MySQL 管理员账号，请用管理员 PowerShell 运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\recover-local-mysql-user.ps1
+npm run db:local:init
+```
+
+私信权限按 L0-L5 用户关系等级判断：L1 陌生人只允许首条打招呼，L3 及以上才允许发送链接。
+
+本地演示账号：
+
+| 角色 | 邮箱 | 密码 |
+| --- | --- | --- |
+| 管理员 | `user@qq.com` | `1234567` |
+| 普通用户 | `xuzirui@qq.com` | `1234567` |
+| 普通用户 | `yaowentao@qq.com` | `1234567` |
+| 普通用户 | `luojunjie@qq.com` | `1234567` |
+| 普通用户 | `liupeng@qq.com` | `1234567` |
+| 普通用户 | `lishaowei@qq.com` | `1234567` |
 
 ## Supabase 初始化
 

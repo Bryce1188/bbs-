@@ -1,4 +1,24 @@
-import { boards, friendships, messages, notifications, posts, profiles, replies, reports, stats } from "@/lib/mock-data";
+import { replies, stats } from "@/lib/mock-data";
+import {
+  getCurrentLocalUserId,
+  getLocalAdminProfiles,
+  getLocalAuditLogs,
+  getLocalBoardPosts,
+  getLocalBoards,
+  getLocalFriendships,
+  getLocalHomeStats,
+  getLocalMessages,
+  getLocalNotifications,
+  getLocalNotices,
+  getLocalPost,
+  getLocalPosts,
+  getLocalProfile,
+  getLocalProfilePosts,
+  getLocalProfiles,
+  getLocalReplies,
+  getLocalReports,
+  getLocalRoles
+} from "@/lib/local-db";
 import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import type {
   AuditLogItem,
@@ -301,7 +321,7 @@ export function getUnknownBoard(): Board {
 export async function getBoards(): Promise<Board[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(boards);
+    return getLocalBoards();
   }
 
   const { data, error } = await supabase.from("boards").select(BOARD_COLUMNS).order("sort_order", { ascending: true });
@@ -312,7 +332,7 @@ export async function getBoards(): Promise<Board[]> {
 export async function getPosts(limit = 50, options: { includeContent?: boolean } = {}): Promise<Post[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(posts).map((post) => ({ ...post, viewerHasLiked: false, viewerHasBookmarked: false }));
+    return getLocalPosts(limit, options);
   }
 
   const query = options.includeContent
@@ -327,7 +347,7 @@ export async function getPosts(limit = 50, options: { includeContent?: boolean }
 export async function getProfiles(): Promise<Profile[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(profiles);
+    return getLocalProfiles();
   }
 
   const { data, error } = await supabase.from("public_profiles").select(PUBLIC_PROFILE_COLUMNS).order("created_at", { ascending: false });
@@ -338,7 +358,7 @@ export async function getProfiles(): Promise<Profile[]> {
 export async function getAdminProfiles(): Promise<Profile[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(profiles);
+    return getLocalAdminProfiles();
   }
 
   const { data, error } = await supabase.from("profiles").select(PROFILE_COLUMNS).order("created_at", { ascending: false });
@@ -348,7 +368,7 @@ export async function getAdminProfiles(): Promise<Profile[]> {
 
 export async function getProfile(id: string): Promise<Profile | undefined> {
   if (!isSupabaseConfigured()) {
-    return fallback(profiles).find((profile) => profile.id === id);
+    return getLocalProfile(id);
   }
 
   const supabase = await getSupabaseServerClient();
@@ -371,7 +391,7 @@ export async function getHomeData() {
 export async function getHomeStats() {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(stats);
+    return getLocalHomeStats();
   }
 
   const today = new Date();
@@ -433,19 +453,7 @@ export async function getPost(id: string | number) {
   }
 
   if (!isSupabaseConfigured()) {
-    const post = fallback(posts).find((item) => item.id === numericId);
-    if (!post) return undefined;
-    const profileList = fallback(profiles);
-    const boardList = fallback(boards);
-    return {
-      post,
-      author: profileList.find((profile) => profile.id === post.authorId) ?? getAnonymousProfile(),
-      board: boardList.find((board) => board.id === post.boardId),
-      replies: fallback(replies.filter((reply) => reply.postId === post.id && reply.visible)),
-      profiles: profileList,
-      viewerHasLiked: false,
-      viewerHasBookmarked: false
-    };
+    return getLocalPost(numericId);
   }
 
   const supabase = await getSupabaseServerClient();
@@ -493,11 +501,7 @@ export async function getPost(id: string | number) {
 export async function getBoardPosts(boardId: number, options: { includeContent?: boolean } = {}) {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(posts.filter((post) => post.boardId === boardId)).map((post) => ({
-      ...post,
-      viewerHasLiked: false,
-      viewerHasBookmarked: false
-    }));
+    return getLocalBoardPosts(boardId, options);
   }
 
   const query = options.includeContent
@@ -512,11 +516,7 @@ export async function getBoardPosts(boardId: number, options: { includeContent?:
 export async function getProfilePosts(profileId: string) {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(posts.filter((post) => post.authorId === profileId)).map((post) => ({
-      ...post,
-      viewerHasLiked: false,
-      viewerHasBookmarked: false
-    }));
+    return getLocalProfilePosts(profileId);
   }
 
   const { data, error } = await supabase
@@ -533,7 +533,8 @@ export async function getProfilePosts(profileId: string) {
 export async function getMessages(): Promise<Message[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(messages);
+    const userId = await getCurrentLocalUserId();
+    return userId ? getLocalMessages(userId) : [];
   }
 
   const {
@@ -566,7 +567,7 @@ export async function getMessages(): Promise<Message[]> {
 
 export async function getCurrentUserId(): Promise<string | null> {
   const supabase = await getSupabaseServerClient();
-  if (!supabase) return "admin";
+  if (!supabase) return getCurrentLocalUserId();
 
   const {
     data: { user },
@@ -579,7 +580,7 @@ export async function getCurrentUserId(): Promise<string | null> {
 export async function getFriendships(): Promise<FriendshipItem[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(friendships);
+    return getLocalFriendships();
   }
 
   const {
@@ -611,7 +612,7 @@ export async function getFriendships(): Promise<FriendshipItem[]> {
 export async function getNotifications(): Promise<NotificationItem[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(notifications);
+    return getLocalNotifications();
   }
 
   const {
@@ -643,7 +644,7 @@ export async function getNotifications(): Promise<NotificationItem[]> {
 export async function getReports(): Promise<ReportItem[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(reports);
+    return getLocalReports();
   }
 
   const { data, error } = await supabase.from("reports").select(REPORT_COLUMNS).order("created_at", { ascending: false }).limit(100);
@@ -663,7 +664,7 @@ export async function getReports(): Promise<ReportItem[]> {
 export async function getReplies(): Promise<Reply[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(replies);
+    return getLocalReplies();
   }
 
   const { data, error } = await supabase.from("post_replies").select(REPLY_COLUMNS).order("created_at", { ascending: false }).limit(100);
@@ -673,7 +674,7 @@ export async function getReplies(): Promise<Reply[]> {
 
 export async function getNotices(): Promise<NoticeItem[]> {
   const supabase = await getSupabaseServerClient();
-  if (!supabase) return [];
+  if (!supabase) return getLocalNotices();
 
   const { data, error } = await supabase.from("notices").select(NOTICE_COLUMNS).order("created_at", { ascending: false }).limit(50);
   if (error) throwDataError("读取公告失败", error);
@@ -693,11 +694,7 @@ export async function getNotices(): Promise<NoticeItem[]> {
 export async function getRoles(): Promise<RoleItem[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return [
-      { id: 1, code: "admin", name: "超级管理员", description: "拥有后台全量权限" },
-      { id: 2, code: "moderator", name: "板块管理员", description: "管理分配板块内的帖子和举报" },
-      { id: 3, code: "member", name: "普通用户", description: "发帖、回复、收藏和私信" }
-    ];
+    return getLocalRoles();
   }
 
   const { data, error } = await supabase.from("roles").select(ROLE_COLUMNS).order("id", { ascending: true });
@@ -716,10 +713,7 @@ export async function getRoles(): Promise<RoleItem[]> {
 export async function getAuditLogs(): Promise<AuditLogItem[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return [
-      { id: 1, actorId: "admin", action: "update_board_order", targetType: "board", targetId: "1", createdAt: new Date().toISOString() },
-      { id: 2, actorId: "moderator", action: "resolve_report", targetType: "report", targetId: "1", createdAt: new Date().toISOString() }
-    ];
+    return getLocalAuditLogs();
   }
 
   const { data, error } = await supabase.from("audit_logs").select(AUDIT_LOG_COLUMNS).order("created_at", { ascending: false }).limit(100);

@@ -5,13 +5,18 @@ import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getBoards, getProfile, getProfilePosts, getUnknownBoard } from "@/lib/data";
+import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Textarea } from "@/components/ui/textarea";
+import { updateProfileAction } from "@/app/actions";
+import { getBoards, getCurrentUserId, getProfile, getProfilePosts, getUnknownBoard } from "@/lib/data";
 import { formatDate, formatNumber } from "@/lib/utils";
 
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [profile, authoredPosts, boards] = await Promise.all([getProfile(id), getProfilePosts(id), getBoards()]);
+  const [profile, authoredPosts, boards, currentUserId] = await Promise.all([getProfile(id), getProfilePosts(id), getBoards(), getCurrentUserId()]);
   if (!profile) notFound();
+  const isSelf = currentUserId === profile.id;
 
   return (
     <section className="section-shell">
@@ -43,6 +48,24 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
           </div>
         </CardContent>
       </Card>
+      {isSelf ? (
+        <Card className="glass-panel mt-5">
+          <CardContent className="p-5">
+            <form action={updateProfileAction} className="grid gap-3">
+              <h2 className="font-semibold">修改用户信息</h2>
+              <label className="grid gap-1.5 text-sm font-medium" htmlFor="profile-display-name">
+                名字
+                <Input id="profile-display-name" name="displayName" defaultValue={profile.displayName} />
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium" htmlFor="profile-signature">
+                签名
+                <Textarea id="profile-signature" name="signature" defaultValue={profile.signature} />
+              </label>
+              <SubmitButton className="justify-self-start" pendingText="保存中…">保存资料</SubmitButton>
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
       <div className="mt-6 flex items-center gap-2">
         <MessageSquare className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">TA 的主题</h2>

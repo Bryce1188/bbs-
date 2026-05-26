@@ -1,8 +1,11 @@
 import http from "node:http";
 import next from "next";
+import { loadEnvConfig } from "@next/env";
 import { WebSocketServer } from "ws";
-import { appendMessage, getMessagesForUser, readData, toClientMessage } from "./local-server/message-store.mjs";
+import { appendMessage, getMessagesForUser, readPolicyData, toClientMessage } from "./local-server/mysql-message-store.mjs";
 import { canSendMessage } from "./local-server/relation-policy.mjs";
+
+loadEnvConfig(process.cwd());
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOSTNAME ?? "localhost";
@@ -93,7 +96,7 @@ wss.on("connection", async (ws, _req, userId) => {
     const content = String(event.content ?? "").trim();
     const clientMsgId = String(event.clientMsgId ?? "").trim();
     const time = Number(event.time ?? Date.now());
-    const data = await readData();
+    const data = await readPolicyData();
     const allowed = canSendMessage(data, userId, receiverId, content);
 
     if (!allowed.ok) {
@@ -109,8 +112,8 @@ wss.on("connection", async (ws, _req, userId) => {
       srcUser: { userId },
       tarUser: { userId: receiverId },
       content: message.content,
-      time: message.msgTime,
-      clientMsgId: message.clientMsgId
+      time: message.msg_time,
+      clientMsgId: message.client_msg_id
     };
 
     sendToUser(userId, isLegacyMessage ? legacyPayload : modernSenderPayload);

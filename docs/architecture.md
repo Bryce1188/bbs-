@@ -15,13 +15,19 @@
 - 表现层：`src/app/messages/page.tsx` 和 `src/components/messages/local-websocket-chat.tsx` 负责私信 UI、在线状态和发送入口。
 - 控制层：`server.mjs` 统一承接 HTTP 页面请求与 `/ws/messages` WebSocket 升级请求。
 - 服务层：`local-server/relation-policy.mjs` 实现 L0-L5 用户关系等级、陌生人首条限制和低等级链接限制。
-- DAO 层：`local-server/message-store.mjs` 读写 `.local-data/course-chat.json`，模拟本地数据库持久化。
+- DAO 层：`src/lib/local-db.ts` 与 `local-server/mysql-message-store.mjs` 读写本地 MySQL `bbs_course`。
 - 实时层：`server.mjs` 使用 `ws` 维护在线连接、Presence 和点对点消息广播。
 
 本地启动命令：
 
 ```bash
 npm run dev:local
+```
+
+首次运行前初始化数据库：
+
+```bash
+npm run db:local:init
 ```
 
 访问 `http://localhost:3000/messages?peer=miao` 后，页面会连接：
@@ -52,10 +58,10 @@ ws://localhost:3000/websocket/admin
 本地课程版私信数据流：
 
 1. 浏览器打开私信页，客户端组件建立 WebSocket 连接。
-2. `server.mjs` 根据 `userId` 读取本地 JSON 消息并下发 `init`。
+2. `server.mjs` 根据 `userId` 读取本地 MySQL 消息并下发 `init`。
 3. 浏览器发送 `send_message` 事件。
 4. `relation-policy.mjs` 校验关系等级和内容限制。
-5. `message-store.mjs` 写入 `.local-data/course-chat.json`。
+5. `mysql-message-store.mjs` 写入 `private_messages` 表。
 6. WebSocket 网关向发送者和接收者推送新的消息事件。
 
 ## 权限边界
@@ -63,7 +69,7 @@ ws://localhost:3000/websocket/admin
 - 公开页面读取 `public_profiles` 视图，不直接暴露 `profiles.role`。
 - 普通用户只能更新自己的公开资料字段。
 - `role/points/level_name` 等敏感字段只能由管理员更新。
-- `/admin/*` 在 Supabase 未配置时 fail-closed，不提供演示放行。
+- `/admin/*` 在本地模式下要求 MySQL 当前用户角色为 `admin` 或 `moderator`。
 - `ADMIN_DEMO_MODE=true` 只用于本地展示 mock 后台 UI，不改变生产默认安全策略，写操作仍要求真实 Supabase。
 - `bootstrap_admin_by_email` 只授予 `service_role` 执行权限，用于首次管理员初始化。
 - 公开 Storage bucket 不接受头像 SVG 上传，降低公开图片内容注入面。

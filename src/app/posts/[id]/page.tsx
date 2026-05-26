@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Flag, MessageSquarePlus, Star, ThumbsUp } from "lucide-react";
+import { Flag, MessageSquarePlus, Star, ThumbsUp, Trash2 } from "lucide-react";
 import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,12 +8,13 @@ import { PageAlert } from "@/components/ui/page-alert";
 import { Separator } from "@/components/ui/separator";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { createReplyAction, createReportAction, toggleBookmarkAction, togglePostLikeAction } from "@/app/actions";
-import { getAnonymousProfile, getPost } from "@/lib/data";
+import { createReplyAction, createReportAction, deletePostAction, toggleBookmarkAction, togglePostLikeAction } from "@/app/actions";
+import { getAnonymousProfile, getCurrentUserId, getPost } from "@/lib/data";
 import { formatDate, formatNumber } from "@/lib/utils";
 
 const NOTICE_TEXT: Record<string, string> = {
   reply_created: "回复已发布。",
+  post_deleted: "帖子已删除。",
   like_added: "已点赞。",
   like_removed: "已取消点赞。",
   bookmark_added: "已加入收藏。",
@@ -25,7 +26,8 @@ const ERROR_TEXT: Record<string, string> = {
   reply_failed: "回复提交失败，请稍后重试。",
   like_failed: "点赞操作失败，请稍后重试。",
   bookmark_failed: "收藏操作失败，请稍后重试。",
-  report_failed: "举报提交失败，请稍后重试。"
+  report_failed: "举报提交失败，请稍后重试。",
+  delete_failed: "删除失败，只有作者或管理员可以删除。"
 };
 
 export default async function PostDetailPage({
@@ -40,7 +42,11 @@ export default async function PostDetailPage({
   const detail = await getPost(id);
   if (!detail?.board) notFound();
 
-  const { post, author, board, replies, profiles, viewerHasLiked, viewerHasBookmarked } = detail;
+  const { post, board, replies, profiles, viewerHasLiked, viewerHasBookmarked } = detail;
+  const author = detail.author ?? getAnonymousProfile();
+  const currentUserId = await getCurrentUserId();
+  const currentUser = profiles.find((profile) => profile.id === currentUserId);
+  const canDelete = currentUserId === post.authorId || currentUser?.role === "admin" || currentUser?.role === "moderator";
 
   return (
     <section className="section-shell">
@@ -90,6 +96,15 @@ export default async function PostDetailPage({
                   举报
                 </SubmitButton>
               </form>
+              {canDelete ? (
+                <form action={deletePostAction}>
+                  <input type="hidden" name="postId" value={post.id} />
+                  <SubmitButton variant="glass" size="sm" pendingText="删除中…">
+                    <Trash2 className="h-4 w-4" />
+                    删除
+                  </SubmitButton>
+                </form>
+              ) : null}
             </div>
           </div>
           <Separator className="my-6" />

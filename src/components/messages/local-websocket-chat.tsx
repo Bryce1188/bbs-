@@ -104,7 +104,7 @@ export function LocalWebSocketChat({ currentUserId, profiles, initialMessages, a
       <div className="flex items-start justify-between gap-3 border-b pb-4">
         <div>
           <h2 className="font-semibold">{activePeer ? `与 ${activePeer.displayName} 的会话` : "选择一条会话"}</h2>
-          <p className="text-xs text-muted-foreground">本地 WebSocket 网关：MVC 页面 + Service 权限策略 + JSON DAO 持久化</p>
+          <p className="text-xs text-muted-foreground">本地 WebSocket 网关：MVC 页面 + Service 权限策略 + MySQL DAO 持久化</p>
         </div>
         <Badge variant={connected ? "teal" : "secondary"} className="shrink-0">
           {connected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}

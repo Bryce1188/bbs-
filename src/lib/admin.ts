@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { requireLocalAdmin } from "@/lib/local-db";
 import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export function isAdminDemoMode() {
@@ -7,6 +8,7 @@ export function isAdminDemoMode() {
 
 export async function requireAdminAccess() {
   if (!isSupabaseConfigured()) {
+    if (await requireLocalAdmin()) return;
     if (isAdminDemoMode()) return;
     redirect("/auth?next=/admin&error=admin_requires_supabase");
   }

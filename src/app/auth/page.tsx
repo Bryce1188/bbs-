@@ -1,22 +1,36 @@
 import Link from "next/link";
 import { LogIn, UserRoundPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { signInAction, signUpAction } from "@/app/actions";
+import { signInAction, signOutAction, signUpAction } from "@/app/actions";
+import { getCurrentUserId, getProfile } from "@/lib/data";
 
-export default async function AuthPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; created?: string; reset?: string }> }) {
-  const { next, error, created, reset } = await searchParams;
+export default async function AuthPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; created?: string; reset?: string; notice?: string }> }) {
+  const { next, error, created, reset, notice } = await searchParams;
+  const currentUserId = await getCurrentUserId();
+  const currentUser = currentUserId ? await getProfile(currentUserId) : null;
 
   return (
     <section className="section-shell grid min-h-[calc(100svh-4rem)] items-center">
       <Card className="glass-panel mx-auto w-full max-w-md">
         <CardContent className="p-6">
-          <Badge variant="outline">Supabase Auth</Badge>
+          <Badge variant="outline">本地登录</Badge>
           <h1 className="mt-3 text-2xl font-semibold tracking-normal">登录或注册</h1>
+          {currentUser ? (
+            <div className="mt-4 rounded-md border bg-muted/35 p-3 text-sm">
+              <p className="font-medium">当前已登录：{currentUser.displayName}</p>
+              <p className="mt-1 text-muted-foreground">{currentUser.username} · {currentUser.role}</p>
+              <form action={signOutAction} className="mt-3">
+                <Button type="submit" variant="secondary" size="sm">退出登录</Button>
+              </form>
+            </div>
+          ) : null}
           {created ? <p className="mt-3 rounded-md bg-muted/70 p-3 text-sm text-muted-foreground">账号已创建并完成邮箱确认，可以直接登录。</p> : null}
           {reset ? <p className="mt-3 rounded-md bg-muted/70 p-3 text-sm text-muted-foreground">密码已更新，请使用新密码登录。</p> : null}
+          {notice === "profile_updated" ? <p className="mt-3 rounded-md bg-muted/70 p-3 text-sm text-muted-foreground">资料已更新。</p> : null}
           {error ? <p className="mt-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">登录状态需要重新确认：{error}</p> : null}
           <form action={signInAction} className="mt-6 grid gap-3">
             <input type="hidden" name="next" value={next ?? "/"} />
@@ -39,7 +53,11 @@ export default async function AuthPage({ searchParams }: { searchParams: Promise
             </div>
             <div className="mt-2 rounded-md border bg-muted/35 p-3">
               <p className="text-sm font-medium">还没有账号？</p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">使用上面的邮箱和密码创建普通账号，创建后可直接登录。</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">填写名字、邮箱和密码创建普通账号，创建后可直接登录。</p>
+              <label className="mt-3 grid gap-1.5 text-sm font-medium" htmlFor="displayName">
+                名字
+                <Input id="displayName" name="displayName" placeholder="徐子锐" />
+              </label>
               <SubmitButton formAction={signUpAction} variant="glass" className="mt-3 w-full" pendingText="创建中…">
                 <UserRoundPlus className="h-4 w-4" />
                 创建账号
