@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { LogIn, LogOut, Settings2, ShieldCheck, UserCircle2, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -14,6 +15,7 @@ export function SettingsPanel() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const reduceMotion = useReducedMotion();
+  const pathname = usePathname();
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -36,6 +38,22 @@ export function SettingsPanel() {
       data.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+
+    let active = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      setUserId(data.user?.id ?? null);
+      setUserEmail(data.user?.email ?? "");
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
