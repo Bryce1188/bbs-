@@ -204,6 +204,14 @@ export type Database = {
         Args: { target_email: string };
         Returns: string;
       };
+      confirm_user_email_by_id: {
+        Args: { target_user_id: string };
+        Returns: void;
+      };
+      register_confirmed_user: {
+        Args: { user_email: string; user_password: string };
+        Returns: string;
+      };
     };
     Enums: {
       user_role: UserRole;

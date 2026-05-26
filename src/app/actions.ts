@@ -70,9 +70,9 @@ export async function signUpAction(formData: FormData) {
   if (!parsed.success) redirect("/auth?error=invalid_credentials");
 
   const supabase = await getSupabaseOrRedirect("/auth");
-  const { error } = await supabase.auth.signUp({
-    email: parsed.data.account,
-    password: parsed.data.password
+  const { error } = await supabase.rpc("register_confirmed_user", {
+    user_email: parsed.data.account,
+    user_password: parsed.data.password
   });
 
   if (error) redirect("/auth?error=sign_up_failed");
