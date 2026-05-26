@@ -8,9 +8,9 @@ export const RELATION_LEVELS = {
 };
 
 const DEFAULT_RELATIONS = [
-  { a: "admin", b: "miao", level: RELATION_LEVELS.FRIEND },
-  { a: "admin", b: "lin", level: RELATION_LEVELS.FOLLOWING },
-  { a: "lin", b: "miao", level: RELATION_LEVELS.STRANGER }
+  { a: "admin", b: "xuzirui", level: RELATION_LEVELS.FRIEND },
+  { a: "xuzirui", b: "yaowentao", level: RELATION_LEVELS.FRIEND },
+  { a: "xuzirui", b: "luojunjie", level: RELATION_LEVELS.MUTUAL }
 ];
 
 export function relationKey(a, b) {

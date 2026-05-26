@@ -43,6 +43,7 @@ export function LocalWebSocketChat({ currentUserId, profiles, initialMessages, a
   const [error, setError] = useState<string | null>(null);
   const [lastLevel, setLastLevel] = useState<number | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectRef = useRef<number | null>(null);
 
   const activePeer = profiles.find((profile) => profile.id === activePeerId);
   const activeMessages = useMemo(
@@ -51,38 +52,59 @@ export function LocalWebSocketChat({ currentUserId, profiles, initialMessages, a
   );
 
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/messages?userId=${encodeURIComponent(currentUserId)}`);
-    wsRef.current = ws;
+    let stopped = false;
+    let attempt = 0;
 
-    ws.addEventListener("open", () => {
-      setConnected(true);
-      setError(null);
-    });
-    ws.addEventListener("close", () => {
-      setConnected(false);
-    });
-    ws.addEventListener("message", (event) => {
-      const payload = JSON.parse(event.data) as SocketEvent;
-      if (payload.type === "init") {
-        setMessages(payload.messages);
-        setOnlineUsers(payload.onlineUsers);
-      }
-      if (payload.type === "message") {
-        setMessages((current) => mergeMessage(current, payload.message));
-        setLastLevel(payload.level ?? null);
+    const connect = () => {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/messages?userId=${encodeURIComponent(currentUserId)}`);
+      wsRef.current = ws;
+
+      ws.addEventListener("open", () => {
+        attempt = 0;
+        setConnected(true);
         setError(null);
-      }
-      if (payload.type === "presence") {
-        setOnlineUsers(payload.onlineUsers);
-      }
-      if (payload.type === "error") {
-        setError(payload.message);
-        setLastLevel(payload.level ?? null);
-      }
-    });
+      });
+      ws.addEventListener("close", () => {
+        setConnected(false);
+        if (stopped) return;
+        reconnectRef.current = window.setTimeout(() => {
+          attempt += 1;
+          connect();
+        }, Math.min(1000 * Math.max(1, attempt), 4000));
+      });
+      ws.addEventListener("error", () => {
+        ws.close();
+      });
+      ws.addEventListener("message", (event) => {
+        const payload = JSON.parse(event.data) as SocketEvent;
+        if (payload.type === "init") {
+          setConnected(true);
+          setMessages(payload.messages);
+          setOnlineUsers(payload.onlineUsers);
+        }
+        if (payload.type === "message") {
+          setMessages((current) => mergeMessage(current, payload.message));
+          setLastLevel(payload.level ?? null);
+          setError(null);
+        }
+        if (payload.type === "presence") {
+          setOnlineUsers(payload.onlineUsers);
+        }
+        if (payload.type === "error") {
+          setError(payload.message);
+          setLastLevel(payload.level ?? null);
+        }
+      });
+    };
 
-    return () => ws.close();
+    connect();
+
+    return () => {
+      stopped = true;
+      if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
+      wsRef.current?.close();
+    };
   }, [currentUserId]);
 
   function sendMessage() {

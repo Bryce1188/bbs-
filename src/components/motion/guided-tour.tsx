@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Compass, MessageSquareText, ShieldCheck, Sparkles, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -17,6 +18,7 @@ export function GuidedTour() {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const reduceMotion = useReducedMotion();
+  const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { t } = useI18n();
   const step = steps[index];
@@ -28,6 +30,7 @@ export function GuidedTour() {
   }, []);
 
   useEffect(() => {
+    if (pathname !== "/") return;
     const timer = window.setTimeout(() => {
       if (window.localStorage.getItem("bbs-guided-tour") !== "done") {
         setOpen(true);
@@ -35,7 +38,7 @@ export function GuidedTour() {
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -66,7 +69,7 @@ export function GuidedTour() {
 
   return (
     <AnimatePresence>
-      {open ? (
+      {open && pathname === "/" ? (
         <motion.div
           role="dialog"
           aria-modal="true"

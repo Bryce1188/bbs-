@@ -1,10 +1,11 @@
 import http from "node:http";
 import next from "next";
-import { loadEnvConfig } from "@next/env";
+import nextEnv from "@next/env";
 import { WebSocketServer } from "ws";
 import { appendMessage, getMessagesForUser, readPolicyData, toClientMessage } from "./local-server/mysql-message-store.mjs";
 import { canSendMessage } from "./local-server/relation-policy.mjs";
 
+const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.cwd());
 
 const dev = process.env.NODE_ENV !== "production";
@@ -47,6 +48,7 @@ function broadcastPresence() {
 }
 
 await app.prepare();
+const handleUpgrade = app.getUpgradeHandler();
 
 const server = http.createServer((req, res) => {
   handle(req, res);
@@ -56,8 +58,10 @@ const wss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
-  if (url.pathname !== "/ws/messages" && !url.pathname.startsWith("/websocket/")) {
-    socket.destroy();
+  const isChatUpgrade = url.pathname === "/ws/messages" || url.pathname.startsWith("/websocket/");
+
+  if (!isChatUpgrade) {
+    handleUpgrade(req, socket, head);
     return;
   }
 

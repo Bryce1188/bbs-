@@ -145,11 +145,15 @@ const passwordUpdateSchema = z.object({
 });
 
 export async function updatePasswordAction(formData: FormData) {
+  const rawAccount = text(formData.get("account")) || undefined;
+  const rawCode = text(formData.get("code")) || undefined;
+  const rawPassword = text(formData.get("password")) || text(formData.get("nextPassword"));
+  const rawConfirmPassword = text(formData.get("confirmPassword")) || text(formData.get("nextConfirmPassword"));
   const parsed = passwordUpdateSchema.safeParse({
-    account: text(formData.get("account")) || undefined,
-    code: text(formData.get("code")) || undefined,
-    password: text(formData.get("password")),
-    confirmPassword: text(formData.get("confirmPassword"))
+    account: rawAccount,
+    code: rawCode,
+    password: rawPassword,
+    confirmPassword: rawConfirmPassword
   });
   if (!parsed.success || parsed.data.password !== parsed.data.confirmPassword) {
     redirect("/auth/reset?error=password_mismatch");

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageAlert } from "@/components/ui/page-alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { createPostAction } from "@/app/actions";
@@ -36,20 +35,20 @@ export default async function PublishPage({ searchParams }: { searchParams: Prom
             <Input id="post-title" name="title" placeholder="用一句话说明主题" />
           </label>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="grid gap-1.5 text-sm font-medium">
+            <label className="grid gap-1.5 text-sm font-medium" htmlFor="boardId">
               板块
-              <Select name="boardId" defaultValue={String(boards[0]?.id ?? "")}>
-                <SelectTrigger aria-label="选择板块">
-                  <SelectValue placeholder="选择板块" />
-                </SelectTrigger>
-                <SelectContent>
-                  {boards.map((board) => (
-                    <SelectItem key={board.id} value={String(board.id)}>
-                      {board.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                id="boardId"
+                name="boardId"
+                defaultValue={String(boards[0]?.id ?? "")}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {boards.map((board) => (
+                  <option key={board.id} value={String(board.id)}>
+                    {board.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="grid gap-1.5 text-sm font-medium" htmlFor="post-tags">
               标签

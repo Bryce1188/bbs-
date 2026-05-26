@@ -5,7 +5,7 @@
   "description": "现代化 BBS 社区系统：Next.js、Supabase、shadcn/ui、Motion、Vercel 双轨重构版。",
   "scripts": {
     "dev": "next dev",
-    "dev:local": "node server.mjs",
+    "dev:local": "node scripts/dev-local.mjs",
     "db:local:init": "node scripts/init-local-db.mjs",
     "build": "next build",
     "start": "next start",

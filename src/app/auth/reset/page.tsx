@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { KeyRound, MailCheck } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { requestPasswordResetAction, updatePasswordAction } from "@/app/actions";
+import { LocalResetPasswordForm } from "@/components/auth/local-reset-password-form";
+import { requestPasswordResetAction } from "@/app/actions";
 
 export default async function ResetPasswordPage({
   searchParams
@@ -34,28 +35,7 @@ export default async function ResetPasswordPage({
             </SubmitButton>
           </form>
 
-          <form action={updatePasswordAction} className="mt-6 grid gap-3 border-t pt-5">
-            <label className="grid gap-1.5 text-sm font-medium" htmlFor="update-account">
-              注册邮箱
-              <Input id="update-account" name="account" type="email" defaultValue={account ?? ""} placeholder="name@example.com" />
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium" htmlFor="reset-code">
-              验证码
-              <Input id="reset-code" name="code" defaultValue={code ?? ""} placeholder="6 位验证码" />
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium" htmlFor="new-password">
-              新密码
-              <Input id="new-password" name="password" type="password" autoComplete="new-password" placeholder="至少 6 位" />
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium" htmlFor="confirm-password">
-              确认新密码
-              <Input id="confirm-password" name="confirmPassword" type="password" autoComplete="new-password" placeholder="再次输入新密码" />
-            </label>
-            <SubmitButton pendingText="更新中…">
-              <KeyRound className="h-4 w-4" />
-              更新密码
-            </SubmitButton>
-          </form>
+          <LocalResetPasswordForm account={account ?? ""} code={code ?? ""} />
 
           <Button asChild variant="ghost" className="mt-4 w-full">
             <Link href="/auth">返回登录</Link>

@@ -7,7 +7,7 @@ import { GuidedTour } from "@/components/motion/guided-tour";
 
 export const metadata: Metadata = {
   title: "BBS 星桥社区",
-  description: "Next.js + Supabase + shadcn/ui 的现代化论坛系统，兼容课程 MVC 交付说明。"
+  description: "纯本地 MySQL + WebSocket 的企业 BBS 课程系统。"
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

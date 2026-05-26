@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Flag, MessageSquarePlus, Star, ThumbsUp, Trash2 } from "lucide-react";
+import { Flag, Star, ThumbsUp, Trash2 } from "lucide-react";
+import { LocalReplyForm } from "@/components/forum/local-reply-form";
 import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageAlert } from "@/components/ui/page-alert";
 import { Separator } from "@/components/ui/separator";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { createReplyAction, createReportAction, deletePostAction, toggleBookmarkAction, togglePostLikeAction } from "@/app/actions";
+import { createReportAction, deletePostAction, toggleBookmarkAction, togglePostLikeAction } from "@/app/actions";
 import { getAnonymousProfile, getCurrentUserId, getPost } from "@/lib/data";
 import { formatDate, formatNumber } from "@/lib/utils";
 
@@ -24,6 +24,8 @@ const NOTICE_TEXT: Record<string, string> = {
 
 const ERROR_TEXT: Record<string, string> = {
   reply_failed: "回复提交失败，请稍后重试。",
+  invalid_reply: "回复内容无效，请至少输入 2 个字。",
+  supabase_reply_unavailable: "当前提交方式仅用于本地课程版。",
   like_failed: "点赞操作失败，请稍后重试。",
   bookmark_failed: "收藏操作失败，请稍后重试。",
   report_failed: "举报提交失败，请稍后重试。",
@@ -140,17 +142,7 @@ export default async function PostDetailPage({
           })}
           <Card className="glass-panel">
             <CardContent className="p-5">
-              <form action={createReplyAction} className="grid gap-3">
-                <input type="hidden" name="postId" value={post.id} />
-                <label htmlFor="reply-content" className="flex items-center gap-2 font-semibold">
-                  <MessageSquarePlus className="h-4 w-4" />
-                  发表回复
-                </label>
-                <Textarea id="reply-content" name="content" placeholder="写下你的回复" />
-                <SubmitButton className="justify-self-start" pendingText="提交中…">
-                  提交回复
-                </SubmitButton>
-              </form>
+              <LocalReplyForm postId={post.id} />
             </CardContent>
           </Card>
         </div>

@@ -18,27 +18,27 @@ import type {
 } from "@/lib/types";
 
 const SESSION_COOKIE = "bbs_local_session";
-
-let pool: mysql.Pool | null = null;
+const LOCAL_POOL_KEY = Symbol.for("bbs.local.mysql.pool");
 
 type LocalSqlValue = string | number | boolean | Date | null | Buffer | Uint8Array;
 
 function dbConfig() {
   return {
     host: process.env.LOCAL_DB_HOST ?? "127.0.0.1",
-    port: Number(process.env.LOCAL_DB_PORT ?? 3306),
+    port: Number(process.env.LOCAL_DB_PORT ?? 3307),
     database: process.env.LOCAL_DB_NAME ?? "bbs_course",
     user: process.env.LOCAL_DB_USER ?? "bbs_app",
     password: process.env.LOCAL_DB_PASSWORD ?? "xzr1234567",
     charset: "utf8mb4",
     timezone: "+08:00",
-    connectionLimit: 10
+    connectionLimit: 4
   };
 }
 
 export function getLocalPool() {
-  pool ??= mysql.createPool(dbConfig());
-  return pool;
+  const globalScope = globalThis as typeof globalThis & { [LOCAL_POOL_KEY]?: mysql.Pool };
+  globalScope[LOCAL_POOL_KEY] ??= mysql.createPool(dbConfig());
+  return globalScope[LOCAL_POOL_KEY]!;
 }
 
 async function query<T extends mysql.RowDataPacket[]>(sql: string, params: LocalSqlValue[] = []) {

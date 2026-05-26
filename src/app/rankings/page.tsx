@@ -1,4 +1,5 @@
 import { Flame, Trophy } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPosts, getProfiles } from "@/lib/data";
@@ -24,7 +25,7 @@ export default async function RankingsPage() {
             </div>
             <div className="space-y-4">
               {profiles.map((profile, index) => (
-                <div key={profile.id}>
+                <Link key={profile.id} href={`/profile/${profile.id}`} className="block rounded-md p-2 transition hover:bg-muted/60">
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span>{index + 1}. {profile.displayName}</span>
                     <span className="text-muted-foreground">{profile.points}</span>
@@ -32,7 +33,7 @@ export default async function RankingsPage() {
                   <div className="h-2 rounded-full bg-muted">
                     <div className="h-full rounded-full bg-primary" style={{ width: `${percent(profile.points, maxPoints)}%` }} />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </CardContent>
@@ -45,7 +46,7 @@ export default async function RankingsPage() {
             </div>
             <div className="space-y-3">
               {topPosts.map((post, index) => (
-                <div key={post.id} className="rounded-md bg-muted/50 p-3">
+                <Link key={post.id} href={`/posts/${post.id}`} className="block rounded-md bg-muted/50 p-3 transition hover:bg-muted">
                   <div className="flex gap-3">
                     <span className="text-sm font-semibold text-primary">#{index + 1}</span>
                     <div>
@@ -53,7 +54,7 @@ export default async function RankingsPage() {
                       <p className="mt-1 text-xs text-muted-foreground">浏览 {post.viewCount} · 点赞 {post.likeCount} · 回复 {post.replyCount}</p>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </CardContent>

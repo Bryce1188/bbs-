@@ -1,5 +1,6 @@
 import { Check, SendHorizontal, UserPlus, X } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { UserAvatar } from "@/components/forum/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,11 +38,12 @@ export default async function MessagesPage({
   const { peer, userQ, notice, error, draft } = await searchParams;
   const isLocalCourseMode = !isSupabaseConfigured();
   const [messages, profiles, friendships, currentUserId] = await Promise.all([getMessages(), getProfiles(), getFriendships(), getCurrentUserId()]);
+  if (!currentUserId) {
+    const nextPath = peer ? `/messages?peer=${encodeURIComponent(peer)}` : "/messages";
+    redirect(`/auth?next=${encodeURIComponent(nextPath)}`);
+  }
   const peers = Array.from(new Set(messages.map((message) => message.peerId)));
   const profileIds = new Set(profiles.map((profile) => profile.id));
-  const activePeerId = peer && profileIds.has(peer) ? peer : peers[0];
-  const activePeer = profiles.find((profile) => profile.id === activePeerId);
-  const activeMessages = activePeerId ? messages.filter((message) => message.peerId === activePeerId).reverse() : [];
   const friendKeyword = (userQ ?? "").trim().toLowerCase();
   const candidateProfiles = friendKeyword
     ? profiles
@@ -57,6 +59,9 @@ export default async function MessagesPage({
       .filter((id) => id !== currentUserId)
   );
   const acceptedFriends = profiles.filter((profile) => acceptedFriendIds.has(profile.id));
+  const activePeerId = peer && profileIds.has(peer) ? peer : peers[0] ?? acceptedFriends[0]?.id;
+  const activePeer = profiles.find((profile) => profile.id === activePeerId);
+  const activeMessages = activePeerId ? messages.filter((message) => message.peerId === activePeerId).reverse() : [];
 
   return (
     <section className="section-shell">
@@ -67,7 +72,7 @@ export default async function MessagesPage({
         <Badge variant="outline">{isLocalCourseMode ? "Local WebSocket" : "Realtime"}</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">私信中心</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {isLocalCourseMode ? "当前使用纯本地 WebSocket、关系等级权限和 JSON 数据文件，适合课程现场验收。" : "私信列表、好友申请和通知刷新已接入 Supabase Auth/RLS 与 Postgres Changes。"}
+          {isLocalCourseMode ? "当前使用纯本地 WebSocket、关系等级权限和 MySQL 数据库，适合课程现场验收。" : "私信列表、好友申请和通知刷新已接入 Supabase Auth/RLS 与 Postgres Changes。"}
         </p>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -86,7 +91,9 @@ export default async function MessagesPage({
                         <p className="truncate text-sm font-medium">{profile.displayName}</p>
                         <p className="truncate text-xs text-muted-foreground">{profile.signature}</p>
                       </div>
-                      <Badge variant="outline">本地策略</Badge>
+                      <Link href={`/messages?peer=${profile.id}`} className="rounded-md border px-3 py-1.5 text-xs font-medium transition hover:bg-muted">
+                        私信
+                      </Link>
                     </div>
                   ) : (
                     <form key={profile.id} action={sendFriendRequestAction} className="flex items-center justify-between gap-3 rounded-md bg-background/70 p-2">
@@ -171,14 +178,16 @@ export default async function MessagesPage({
                 </Link>
               );
             }) : (
-              <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">暂无会话。登录后会从 Supabase 读取你的私信。</p>
+              <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">
+                {isLocalCourseMode ? "暂无会话。可以先搜索用户并点击私信，也可以选择左侧好友开始聊天。" : "暂无会话。登录后会从 Supabase 读取你的私信。"}
+              </p>
             )}
           </CardContent>
         </Card>
         <Card className="glass-panel min-h-[520px] min-w-0 overflow-hidden">
           {isLocalCourseMode ? (
             <LocalWebSocketChat
-              currentUserId={currentUserId ?? "admin"}
+              currentUserId={currentUserId}
               profiles={profiles}
               initialMessages={messages}
               activePeerId={activePeerId}
