@@ -58,7 +58,7 @@ export async function signInAction(formData: FormData) {
     password: parsed.data.password
   });
 
-  if (error) redirect("/auth?error=sign_in_failed");
+  if (error) redirect("/auth?error=invalid_credentials");
   redirect(next);
 }
 
@@ -67,7 +67,16 @@ export async function signUpAction(formData: FormData) {
     account: text(formData.get("account")),
     password: text(formData.get("password"))
   });
-  if (!parsed.success) redirect("/auth?error=invalid_credentials");
+  if (!parsed.success) {
+    const errors = parsed.error.format();
+    if (errors.password) {
+      redirect("/auth?error=weak_password");
+    }
+    if (errors.account) {
+      redirect("/auth?error=invalid_email");
+    }
+    redirect("/auth?error=invalid_credentials");
+  }
 
   const supabase = await getSupabaseOrRedirect("/auth");
   const { error } = await supabase.rpc("register_confirmed_user", {
@@ -75,7 +84,17 @@ export async function signUpAction(formData: FormData) {
     user_password: parsed.data.password
   });
 
-  if (error) redirect("/auth?error=sign_up_failed");
+  if (error) {
+    const msg = error.message || "";
+    if (msg.includes("user_already_exists")) {
+      redirect("/auth?error=user_already_exists");
+    } else if (msg.includes("invalid_email")) {
+      redirect("/auth?error=invalid_email");
+    } else if (msg.includes("weak_password")) {
+      redirect("/auth?error=weak_password");
+    }
+    redirect("/auth?error=sign_up_failed");
+  }
   redirect("/auth?created=1");
 }
 

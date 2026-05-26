@@ -6,8 +6,18 @@ import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { signInAction, signUpAction } from "@/app/actions";
 
+const errorMessages: Record<string, string> = {
+  invalid_credentials: "邮箱或密码错误，请确认后重新登录。",
+  weak_password: "密码安全级别低：长度不能少于 6 位。",
+  invalid_email: "邮箱格式不正确：请输入有效的电子邮箱地址。",
+  user_already_exists: "该邮箱已被注册：请直接登录，或通过忘记密码找回。",
+  sign_up_failed: "注册失败：数据库可能暂时不可用，请稍后再试。",
+  supabase_not_configured: "数据库服务未配置，请联系系统管理员。"
+};
+
 export default async function AuthPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; created?: string; reset?: string }> }) {
   const { next, error, created, reset } = await searchParams;
+  const errorMessage = error ? (errorMessages[error] || `系统提示：${error}`) : null;
 
   return (
     <section className="section-shell grid min-h-[calc(100svh-4rem)] items-center">
@@ -17,7 +27,7 @@ export default async function AuthPage({ searchParams }: { searchParams: Promise
           <h1 className="mt-3 text-2xl font-semibold tracking-normal">登录或注册</h1>
           {created ? <p className="mt-3 rounded-md bg-muted/70 p-3 text-sm text-muted-foreground">账号已创建并完成邮箱确认，可以直接登录。</p> : null}
           {reset ? <p className="mt-3 rounded-md bg-muted/70 p-3 text-sm text-muted-foreground">密码已更新，请使用新密码登录。</p> : null}
-          {error ? <p className="mt-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">登录状态需要重新确认：{error}</p> : null}
+          {errorMessage ? <p className="mt-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{errorMessage}</p> : null}
           <form action={signInAction} className="mt-6 grid gap-3">
             <input type="hidden" name="next" value={next ?? "/"} />
             <label className="grid gap-1.5 text-sm font-medium" htmlFor="account">
