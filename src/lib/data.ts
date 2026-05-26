@@ -458,8 +458,7 @@ export async function getMessages(): Promise<Message[]> {
     data: { user },
     error: userError
   } = await supabase.auth.getUser();
-  if (userError) throwDataError("读取会话用户失败", userError);
-  if (!user) return [];
+  if (userError || !user) return [];
 
   const { data, error } = await supabase
     .from("private_messages")
@@ -491,7 +490,7 @@ export async function getCurrentUserId(): Promise<string | null> {
     data: { user },
     error
   } = await supabase.auth.getUser();
-  if (error) throwDataError("读取当前用户失败", error);
+  if (error) return null;
   return user?.id ?? null;
 }
 
@@ -505,8 +504,7 @@ export async function getFriendships(): Promise<FriendshipItem[]> {
     data: { user },
     error: userError
   } = await supabase.auth.getUser();
-  if (userError) throwDataError("读取好友用户失败", userError);
-  if (!user) return [];
+  if (userError || !user) return [];
 
   const { data, error } = await supabase
     .from("friendships")
@@ -538,8 +536,7 @@ export async function getNotifications(): Promise<NotificationItem[]> {
     data: { user },
     error: userError
   } = await supabase.auth.getUser();
-  if (userError) throwDataError("读取通知用户失败", userError);
-  if (!user) return [];
+  if (userError || !user) return [];
 
   const { data, error } = await supabase
     .from("notifications")
