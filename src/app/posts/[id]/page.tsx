@@ -8,13 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { createReplyAction, createReportAction, toggleBookmarkAction, togglePostLikeAction } from "@/app/actions";
-import { getAnonymousProfile, getPost, getPosts } from "@/lib/data";
+import { getAnonymousProfile, getPost } from "@/lib/data";
 import { formatDate, formatNumber } from "@/lib/utils";
-
-export async function generateStaticParams() {
-  const posts = await getPosts();
-  return posts.map((post) => ({ id: String(post.id) }));
-}
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

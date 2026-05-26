@@ -5,13 +5,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getBoards, getProfile, getProfilePosts, getProfiles, getUnknownBoard } from "@/lib/data";
+import { getBoards, getProfile, getProfilePosts, getUnknownBoard } from "@/lib/data";
 import { formatDate, formatNumber } from "@/lib/utils";
-
-export async function generateStaticParams() {
-  const profiles = await getProfiles();
-  return profiles.map((profile) => ({ id: profile.id }));
-}
 
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

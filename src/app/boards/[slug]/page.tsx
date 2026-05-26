@@ -8,11 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getAnonymousProfile, getBoard, getBoardPosts, getBoards, getProfiles, getUnknownBoard } from "@/lib/data";
 
-export async function generateStaticParams() {
-  const boards = await getBoards();
-  return boards.map((board) => ({ slug: board.slug }));
-}
-
 export default async function BoardDetailPage({
   params,
   searchParams
