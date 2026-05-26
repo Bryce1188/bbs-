@@ -10,7 +10,7 @@ export default async function AdminPage() {
   return (
     <section className="section-shell">
       <div className="mb-6">
-        <Badge variant="teal">后台管理</Badge>
+        <Badge variant="outline">后台管理</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">管理控制台</h1>
         <p className="mt-2 text-sm text-muted-foreground">用 shadcn/ui 和 TanStack Table 方案替代旧 layui/layuimini 后台。</p>
       </div>

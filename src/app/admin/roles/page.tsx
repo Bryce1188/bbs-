@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { createRoleAction, deleteRoleAction, updateRoleAction } from "@/app/actions";
 import { getRoles } from "@/lib/data";
@@ -12,7 +12,7 @@ export default async function AdminRolesPage({ searchParams }: { searchParams: P
 
   return (
     <section className="section-shell">
-      <Badge variant="teal">角色权限</Badge>
+      <Badge variant="outline">角色权限</Badge>
       <h1 className="mt-3 text-3xl font-semibold tracking-normal">RBAC 权限设计</h1>
       {error ? <p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">角色操作失败：{error}</p> : null}
       <Card className="glass-panel mt-6">
@@ -30,7 +30,7 @@ export default async function AdminRolesPage({ searchParams }: { searchParams: P
               描述
               <Input name="description" placeholder="角色说明" />
             </label>
-            <Button type="submit">新增角色</Button>
+            <SubmitButton pendingText="新增中…">新增角色</SubmitButton>
           </form>
         </CardContent>
       </Card>
@@ -54,8 +54,10 @@ export default async function AdminRolesPage({ searchParams }: { searchParams: P
                   <Textarea name="description" defaultValue={role.description} className="min-h-20" />
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="submit" size="sm" variant="secondary">保存</Button>
-                  <Button type="submit" size="sm" variant="destructive" formAction={deleteRoleAction}>删除</Button>
+                  <SubmitButton size="sm" variant="secondary" pendingText="保存中…">保存</SubmitButton>
+                  <SubmitButton type="submit" size="sm" variant="destructive" formAction={deleteRoleAction} pendingText="删除中…">
+                    删除
+                  </SubmitButton>
                 </div>
               </form>
             </CardContent>

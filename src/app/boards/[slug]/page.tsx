@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { getAnonymousProfile, getBoard, getBoardPosts, getBoards, getProfiles, getUnknownBoard } from "@/lib/data";
 
 export default async function BoardDetailPage({
@@ -42,7 +43,7 @@ export default async function BoardDetailPage({
       <Card className="glass-panel mb-5 overflow-hidden">
         <CardContent className="grid gap-5 p-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <Badge variant="teal">{board.group}</Badge>
+            <Badge variant="outline">{board.group}</Badge>
             <h1 className="mt-3 text-3xl font-semibold tracking-normal">{board.name}</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{board.description}</p>
           </div>
@@ -58,8 +59,8 @@ export default async function BoardDetailPage({
       </Card>
       <form action={`/boards/${board.slug}`} className="mb-5 grid gap-3 md:grid-cols-[1fr_180px_180px]">
         <Input aria-label="搜索本板块主题" defaultValue={q ?? ""} name="q" placeholder="搜索本板块主题" />
-        <Button type="submit" name="sort" value="latest" variant={sort === "hot" ? "secondary" : "default"}>最新回复</Button>
-        <Button type="submit" name="sort" value="hot" variant={sort === "hot" ? "default" : "secondary"}>热度优先</Button>
+        <SubmitButton name="sort" value="latest" variant={sort === "hot" ? "secondary" : "default"} pendingText="加载中…">最新回复</SubmitButton>
+        <SubmitButton name="sort" value="hot" variant={sort === "hot" ? "default" : "secondary"} pendingText="加载中…">热度优先</SubmitButton>
       </form>
       <div className="grid gap-4">
         {filteredPosts.length ? (

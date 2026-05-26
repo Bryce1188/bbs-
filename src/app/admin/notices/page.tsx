@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { createNoticeAction } from "@/app/actions";
 import { getBoards, getNotices } from "@/lib/data";
@@ -12,7 +13,7 @@ export default async function AdminNoticesPage() {
 
   return (
     <section className="section-shell">
-      <Badge variant="teal">公告管理</Badge>
+      <Badge variant="outline">公告管理</Badge>
       <h1 className="mt-3 text-3xl font-semibold tracking-normal">发布社区公告</h1>
       <Card className="glass-panel mt-6">
         <CardContent className="p-6">
@@ -21,20 +22,27 @@ export default async function AdminNoticesPage() {
               公告标题
               <Input id="notice-title" name="title" placeholder="公告标题" />
             </label>
-            <label className="grid gap-1.5 text-sm font-medium" htmlFor="notice-board">
+            <label className="grid gap-1.5 text-sm font-medium">
               关联板块
-              <select id="notice-board" name="boardId" className="h-10 rounded-md border border-input bg-background px-3 text-sm">
-                <option value="">全站公告</option>
-                {boards.map((board) => (
-                  <option key={board.id} value={board.id}>{board.name}</option>
-                ))}
-              </select>
+              <Select name="boardId" defaultValue="all">
+                <SelectTrigger aria-label="选择板块">
+                  <SelectValue placeholder="全站公告" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全站公告</SelectItem>
+                  {boards.map((board) => (
+                    <SelectItem key={board.id} value={String(board.id)}>
+                      {board.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
             <label className="grid gap-1.5 text-sm font-medium" htmlFor="notice-content">
               公告内容
               <Textarea id="notice-content" name="content" placeholder="公告内容" />
             </label>
-            <Button type="submit" className="justify-self-start">发布公告</Button>
+            <SubmitButton className="justify-self-start" pendingText="发布中…">发布公告</SubmitButton>
           </form>
         </CardContent>
       </Card>

@@ -20,7 +20,7 @@ export default async function HomePage() {
       <section className="relative overflow-hidden">
         <div className="container grid min-h-[calc(100svh-4rem)] items-center gap-8 py-10 lg:grid-cols-[1.05fr_0.95fr]">
           <AnimatedSection>
-            <Badge variant="teal">
+            <Badge variant="outline">
               <LocaleText id="homeBadge" />
             </Badge>
             <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight tracking-normal md:text-6xl">

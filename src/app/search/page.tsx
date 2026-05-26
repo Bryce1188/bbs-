@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { getAnonymousProfile, getBoards, getPosts, getProfiles, getUnknownBoard } from "@/lib/data";
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -33,7 +34,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <section className="section-shell">
       <div className="mb-6">
-        <Badge variant="teal">搜索</Badge>
+        <Badge variant="outline">搜索</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">查找主题、板块和用户</h1>
       </div>
       <Card className="glass-panel mb-5">
@@ -47,7 +48,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               name="q"
               placeholder="输入关键词"
             />
-            <Button type="submit" size="sm">搜索</Button>
+            <SubmitButton size="sm" pendingText="搜索中…">搜索</SubmitButton>
           </form>
         </CardContent>
       </Card>

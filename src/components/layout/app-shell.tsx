@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { Bell, Compass, Home, LayoutGrid, MessageCircle, PenSquare, Search, ShieldCheck, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageToggle } from "@/components/layout/language-toggle";
+import { NavigationProgress } from "@/components/layout/navigation-progress";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { RouteTransition } from "@/components/motion/route-transition";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen overflow-hidden">
+      <NavigationProgress />
       <div className="fixed inset-0 -z-10 line-grid bg-[linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.35),hsl(var(--background)))]" />
       <div className="fixed left-0 right-0 top-0 z-40 border-b bg-background/75 backdrop-blur-xl md:backdrop-blur-2xl">
         <div className="container flex h-16 items-center justify-between gap-3">
@@ -75,7 +78,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      <main className="pb-20 pt-16 md:pb-0">{children}</main>
+      <main className="pb-20 pt-16 md:pb-0">
+        <RouteTransition>{children}</RouteTransition>
+      </main>
       <nav aria-label="移动端主导航" className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/85 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
         <div className="grid grid-cols-5 gap-1">
           {navItems.map((item) => {

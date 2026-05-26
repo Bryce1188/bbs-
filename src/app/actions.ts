@@ -321,10 +321,11 @@ const noticeSchema = z.object({
 export async function createNoticeAction(formData: FormData) {
   await requireAdminAccess();
   const rawBoardId = text(formData.get("boardId"));
+  const boardIdValue = rawBoardId === "all" ? "" : rawBoardId;
   const parsed = noticeSchema.safeParse({
     title: text(formData.get("title")),
     content: text(formData.get("content")),
-    boardId: rawBoardId ? rawBoardId : undefined
+    boardId: boardIdValue ? boardIdValue : undefined
   });
   if (!parsed.success) redirect("/admin/notices?error=invalid_notice");
 

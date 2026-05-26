@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { createPostAction } from "@/app/actions";
 import { getBoards } from "@/lib/data";
@@ -13,7 +15,7 @@ export default async function PublishPage() {
   return (
     <section className="section-shell">
       <div className="mb-6">
-        <Badge variant="teal">发布主题</Badge>
+        <Badge variant="outline">发布主题</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">创建一篇新帖子</h1>
         <p className="mt-2 text-sm text-muted-foreground">表单会通过 Server Action 写入 Supabase；图片上传将在 Storage 签名上传流程接入后开放。</p>
       </div>
@@ -25,13 +27,20 @@ export default async function PublishPage() {
             <Input id="post-title" name="title" placeholder="用一句话说明主题" />
           </label>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="grid gap-1.5 text-sm font-medium" htmlFor="post-board">
+            <label className="grid gap-1.5 text-sm font-medium">
               板块
-              <select id="post-board" name="boardId" className="h-10 rounded-md border border-input bg-background px-3 text-sm">
-              {boards.map((board) => (
-                <option key={board.id} value={board.id}>{board.name}</option>
-              ))}
-              </select>
+              <Select name="boardId" defaultValue={String(boards[0]?.id ?? "")}>
+                <SelectTrigger aria-label="选择板块">
+                  <SelectValue placeholder="选择板块" />
+                </SelectTrigger>
+                <SelectContent>
+                  {boards.map((board) => (
+                    <SelectItem key={board.id} value={String(board.id)}>
+                      {board.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
             <label className="grid gap-1.5 text-sm font-medium" htmlFor="post-tags">
               标签
@@ -47,10 +56,10 @@ export default async function PublishPage() {
               <ImagePlus className="h-4 w-4" />
               上传图片
             </Button>
-            <Button type="submit">
+            <SubmitButton pendingText="发布中…">
               <Send className="h-4 w-4" />
               发布帖子
-            </Button>
+            </SubmitButton>
           </div>
           </form>
         </CardContent>

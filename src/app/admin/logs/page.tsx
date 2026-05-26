@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { getAuditLogs } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
@@ -18,11 +19,11 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Pr
 
   return (
     <section className="section-shell">
-      <Badge variant="teal">系统日志</Badge>
+      <Badge variant="outline">系统日志</Badge>
       <h1 className="mt-3 text-3xl font-semibold tracking-normal">审计与操作记录</h1>
       <form action="/admin/logs" className="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
         <Input name="action" defaultValue={action ?? ""} placeholder="按操作类型筛选，如 create_post" />
-        <Button type="submit" variant="secondary">筛选</Button>
+        <SubmitButton variant="secondary" pendingText="筛选中…">筛选</SubmitButton>
       </form>
       <div className="mt-6 grid gap-3">
         {visibleLogs.map((log) => (

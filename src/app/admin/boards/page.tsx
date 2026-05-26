@@ -1,8 +1,8 @@
 import { BoardIcon } from "@/components/forum/board-icon";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { updateBoardAction } from "@/app/actions";
 import { getBoards } from "@/lib/data";
@@ -19,12 +19,12 @@ export default async function AdminBoardsPage({ searchParams }: { searchParams: 
     <section className="section-shell">
       <div className="mb-6 grid gap-4 md:grid-cols-[1fr_320px] md:items-end">
         <div>
-          <Badge variant="teal">板块管理</Badge>
+          <Badge variant="outline">板块管理</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-normal">分区、排序与图标</h1>
         </div>
         <form action="/admin/boards" className="flex gap-2">
           <Input aria-label="搜索板块" name="q" defaultValue={q ?? ""} placeholder="搜索板块" />
-          <Button type="submit" variant="secondary">搜索</Button>
+          <SubmitButton variant="secondary" pendingText="搜索中…">搜索</SubmitButton>
         </form>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -70,9 +70,9 @@ export default async function AdminBoardsPage({ searchParams }: { searchParams: 
                   描述
                   <Textarea name="description" defaultValue={board.description} className="min-h-20" />
                 </label>
-                <Button type="submit" size="sm" variant="secondary" className="justify-self-start">
+                <SubmitButton size="sm" variant="secondary" className="justify-self-start" pendingText="保存中…">
                   保存板块
-                </Button>
+                </SubmitButton>
               </form>
             </CardContent>
           </Card>

@@ -64,12 +64,17 @@ const config: Config = {
         "line-drift": {
           "0%": { transform: "translateX(-18%)" },
           "100%": { transform: "translateX(18%)" }
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "line-drift": "line-drift 8s ease-in-out infinite alternate"
+        "line-drift": "line-drift 8s ease-in-out infinite alternate",
+        shimmer: "shimmer 1.6s linear infinite"
       }
     }
   },

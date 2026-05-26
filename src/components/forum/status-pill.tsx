@@ -11,5 +11,5 @@ export function StatusPill({ status }: { status: string }) {
       normal: "普通"
     }[status] ?? status;
 
-  return <Badge variant={status === "pending" ? "amber" : status === "resolved" ? "teal" : "outline"}>{label}</Badge>;
+  return <Badge variant={status === "pending" ? "amber" : status === "resolved" ? "teal" : status === "rejected" ? "destructive" : "outline"}>{label}</Badge>;
 }

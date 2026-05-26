@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { Flag, MessageSquarePlus, Star, ThumbsUp } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { createReplyAction, createReportAction, toggleBookmarkAction, togglePostLikeAction } from "@/app/actions";
 import { getAnonymousProfile, getPost } from "@/lib/data";
@@ -23,7 +23,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
       <Card className="glass-panel overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="teal">{board.name}</Badge>
+            <Badge variant="outline">{board.name}</Badge>
             {post.tags.map((tag) => (
               <Badge variant="secondary" key={tag}>
                 {tag}
@@ -46,25 +46,25 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
             <div className="flex flex-wrap gap-2">
               <form action={togglePostLikeAction}>
                 <input type="hidden" name="postId" value={post.id} />
-                <Button type="submit" variant="glass" size="sm">
+                <SubmitButton variant="glass" size="sm" pendingText="处理中…">
                   <ThumbsUp className="h-4 w-4" />
                   {formatNumber(post.likeCount)}
-                </Button>
+                </SubmitButton>
               </form>
               <form action={toggleBookmarkAction}>
                 <input type="hidden" name="postId" value={post.id} />
-                <Button type="submit" variant="glass" size="sm">
+                <SubmitButton variant="glass" size="sm" pendingText="处理中…">
                   <Star className="h-4 w-4" />
                   收藏
-                </Button>
+                </SubmitButton>
               </form>
               <form action={createReportAction}>
                 <input type="hidden" name="postId" value={post.id} />
                 <input type="hidden" name="reason" value="用户从主题详情页发起举报，请管理员复核内容质量。" />
-                <Button type="submit" variant="glass" size="sm">
+                <SubmitButton variant="glass" size="sm" pendingText="提交中…">
                   <Flag className="h-4 w-4" />
                   举报
-                </Button>
+                </SubmitButton>
               </form>
             </div>
           </div>
@@ -110,9 +110,9 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
                   发表回复
                 </label>
                 <Textarea id="reply-content" name="content" placeholder="写下你的回复" />
-                <Button type="submit" className="justify-self-start">
+                <SubmitButton className="justify-self-start" pendingText="提交中…">
                   提交回复
-                </Button>
+                </SubmitButton>
               </form>
             </CardContent>
           </Card>

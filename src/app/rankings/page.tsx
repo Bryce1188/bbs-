@@ -12,7 +12,7 @@ export default async function RankingsPage() {
   return (
     <section className="section-shell">
       <div className="mb-6">
-        <Badge variant="teal">榜单</Badge>
+        <Badge variant="outline">榜单</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">社区排行榜</h1>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">

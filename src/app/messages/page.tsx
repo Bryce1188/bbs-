@@ -2,10 +2,10 @@ import { Check, SendHorizontal, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { respondFriendRequestAction, sendFriendRequestAction, sendMessageAction } from "@/app/actions";
 import { getCurrentUserId, getFriendships, getMessages, getProfiles } from "@/lib/data";
@@ -39,7 +39,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
     <section className="section-shell">
       <RealtimeRefresh table="private_messages" />
       <div className="mb-6">
-        <Badge variant="teal">Realtime</Badge>
+        <Badge variant="outline">Realtime</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">私信中心</h1>
         <p className="mt-2 text-sm text-muted-foreground">私信列表、好友申请和通知刷新已接入 Supabase Auth/RLS 与 Postgres Changes。</p>
       </div>
@@ -48,7 +48,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
           <CardContent className="grid gap-3 p-4">
             <form action="/messages" className="flex gap-2">
               <Input aria-label="搜索用户" name="userQ" defaultValue={userQ ?? ""} placeholder="搜索用户加好友" />
-              <Button type="submit" size="sm" variant="secondary">搜索</Button>
+              <SubmitButton size="sm" variant="secondary" pendingText="搜索中…">搜索</SubmitButton>
             </form>
             {candidateProfiles.length ? (
               <div className="grid gap-2 rounded-md border bg-muted/30 p-2">
@@ -59,10 +59,10 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
                       <p className="truncate text-sm font-medium">{profile.displayName}</p>
                       <p className="truncate text-xs text-muted-foreground">{profile.signature}</p>
                     </div>
-                    <Button type="submit" size="sm" variant="glass">
+                    <SubmitButton size="sm" variant="glass" pendingText="发送中…">
                       <UserPlus className="h-4 w-4" />
                       添加
-                    </Button>
+                    </SubmitButton>
                   </form>
                 ))}
               </div>
@@ -80,12 +80,20 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
                       {isIncoming ? (
                         <form action={respondFriendRequestAction} className="flex gap-1">
                           <input type="hidden" name="friendshipId" value={request.id} />
-                          <Button type="submit" size="icon" className="h-8 w-8" name="status" value="accepted" aria-label="接受好友申请">
+                          <SubmitButton size="icon" className="h-8 w-8" name="status" value="accepted" aria-label="接受好友申请" pendingText="">
                             <Check className="h-4 w-4" />
-                          </Button>
-                          <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" name="status" value="rejected" aria-label="拒绝好友申请">
+                          </SubmitButton>
+                          <SubmitButton
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8"
+                            name="status"
+                            value="rejected"
+                            aria-label="拒绝好友申请"
+                            pendingText=""
+                          >
                             <X className="h-4 w-4" />
-                          </Button>
+                          </SubmitButton>
                         </form>
                       ) : (
                         <Badge variant="outline">等待确认</Badge>
@@ -154,10 +162,10 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
               <input type="hidden" name="receiverId" value={activePeerId ?? ""} />
               <label htmlFor="message-content" className="sr-only">输入私信内容</label>
               <Textarea id="message-content" name="content" placeholder="输入私信内容" />
-              <Button type="submit" disabled={!activePeerId} className="justify-self-end">
+              <SubmitButton disabled={!activePeerId} className="justify-self-end" pendingText="发送中…">
                 <SendHorizontal className="h-4 w-4" />
                 发送
-              </Button>
+              </SubmitButton>
             </form>
           </CardContent>
         </Card>

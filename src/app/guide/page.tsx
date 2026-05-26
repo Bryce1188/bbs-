@@ -15,7 +15,7 @@ export default function GuidePage() {
   return (
     <section className="section-shell">
       <div className="mb-6">
-        <Badge variant="teal">用户指导</Badge>
+        <Badge variant="outline">用户指导</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">Motion 引导与功能路径</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           页面右下角的浮层使用 Motion for React 实现。这里保留完整指导，方便答辩或部署说明。

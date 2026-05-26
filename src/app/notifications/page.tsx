@@ -1,7 +1,7 @@
 import { BellRing, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { markAllNotificationsReadAction } from "@/app/actions";
 import { getNotifications } from "@/lib/data";
@@ -15,14 +15,14 @@ export default async function NotificationsPage() {
       <RealtimeRefresh table="notifications" />
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <Badge variant="teal">通知</Badge>
+          <Badge variant="outline">通知</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-normal">消息提醒</h1>
         </div>
         <form action={markAllNotificationsReadAction}>
-          <Button type="submit" variant="glass">
+          <SubmitButton variant="glass" pendingText="处理中…">
             <CheckCircle2 className="h-4 w-4" />
             全部已读
-          </Button>
+          </SubmitButton>
         </form>
       </div>
       <div className="grid gap-4">

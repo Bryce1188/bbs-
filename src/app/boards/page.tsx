@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { getBoards } from "@/lib/data";
 
 export default async function BoardsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -22,13 +23,13 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
     <section className="section-shell">
       <div className="mb-6 grid gap-4 md:grid-cols-[1fr_320px] md:items-end">
         <div>
-          <Badge variant="teal">板块导航</Badge>
+          <Badge variant="outline">板块导航</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-normal">按场景组织讨论</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">保留原系统 12 个板块，并改造成响应式卡片、图标和热度统计。</p>
         </div>
         <form action="/boards" className="flex gap-2">
           <Input aria-label="搜索板块" defaultValue={q ?? ""} name="q" placeholder="搜索板块名称、分区或描述" />
-          <Button type="submit" variant="secondary">搜索</Button>
+          <SubmitButton variant="secondary" pendingText="搜索中…">搜索</SubmitButton>
         </form>
       </div>
       <div className="space-y-8">
