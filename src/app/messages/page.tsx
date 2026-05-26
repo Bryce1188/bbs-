@@ -30,9 +30,9 @@ const ERROR_TEXT: Record<string, string> = {
 export default async function MessagesPage({
   searchParams
 }: {
-  searchParams: Promise<{ peer?: string; userQ?: string; notice?: string; error?: string }>;
+  searchParams: Promise<{ peer?: string; userQ?: string; notice?: string; error?: string; draft?: string }>;
 }) {
-  const { peer, userQ, notice, error } = await searchParams;
+  const { peer, userQ, notice, error, draft } = await searchParams;
   const [messages, profiles, friendships, currentUserId] = await Promise.all([getMessages(), getProfiles(), getFriendships(), getCurrentUserId()]);
   const peers = Array.from(new Set(messages.map((message) => message.peerId)));
   const profileIds = new Set(profiles.map((profile) => profile.id));
@@ -181,7 +181,7 @@ export default async function MessagesPage({
             <form action={sendMessageAction} className="grid gap-3">
               <input type="hidden" name="receiverId" value={activePeerId ?? ""} />
               <label htmlFor="message-content" className="sr-only">输入私信内容</label>
-              <Textarea id="message-content" name="content" placeholder="输入私信内容" />
+              <Textarea id="message-content" name="content" placeholder="输入私信内容" defaultValue={draft ?? ""} />
               <SubmitButton disabled={!activePeerId} className="justify-self-end" pendingText="发送中…">
                 <SendHorizontal className="h-4 w-4" />
                 发送

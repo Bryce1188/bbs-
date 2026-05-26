@@ -245,11 +245,19 @@ const messageSchema = z.object({
 });
 
 export async function sendMessageAction(formData: FormData) {
+  const receiverIdRaw = text(formData.get("receiverId"));
+  const contentRaw = text(formData.get("content"));
   const parsed = messageSchema.safeParse({
-    receiverId: text(formData.get("receiverId")),
-    content: text(formData.get("content"))
+    receiverId: receiverIdRaw,
+    content: contentRaw
   });
-  if (!parsed.success) redirect("/messages?error=invalid_message");
+  if (!parsed.success) {
+    const params = new URLSearchParams();
+    params.set("error", "invalid_message");
+    if (receiverIdRaw) params.set("peer", receiverIdRaw);
+    if (contentRaw) params.set("draft", contentRaw.slice(0, 500));
+    redirect(`/messages?${params.toString()}`);
+  }
 
   const { supabase, user } = await getCurrentUserOrRedirect("/messages");
   const { error } = await supabase.from("private_messages").insert({
@@ -258,7 +266,14 @@ export async function sendMessageAction(formData: FormData) {
     content: parsed.data.content
   });
 
-  if (error) redirect(`/messages?peer=${parsed.data.receiverId}&error=send_failed`);
+  if (error) {
+    const params = new URLSearchParams({
+      peer: parsed.data.receiverId,
+      error: "send_failed"
+    });
+    params.set("draft", parsed.data.content.slice(0, 500));
+    redirect(`/messages?${params.toString()}`);
+  }
   revalidatePath("/messages");
   redirect(`/messages?peer=${parsed.data.receiverId}&notice=message_sent`);
 }

@@ -6,6 +6,7 @@ import { Bell, Compass, Home, LayoutGrid, MessageCircle, PenSquare, Search, Shie
 import { Button } from "@/components/ui/button";
 import { LanguageToggle } from "@/components/layout/language-toggle";
 import { NavigationProgress } from "@/components/layout/navigation-progress";
+import { SettingsPanel } from "@/components/layout/settings-panel";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { RouteTransition } from "@/components/motion/route-transition";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -63,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
             <LanguageToggle />
             <ThemeToggle />
+            <SettingsPanel />
             <Button asChild className="hidden sm:inline-flex">
               <Link href="/publish">
                 <PenSquare className="h-4 w-4" />

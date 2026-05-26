@@ -127,6 +127,14 @@ type FriendshipRow = {
   created_at: string;
 };
 
+type PostReactionRow = {
+  post_id: number;
+};
+
+type BookmarkRow = {
+  post_id: number;
+};
+
 const BOARD_COLUMNS = "id,slug,name,group_name,description,icon,theme_color,post_count,today_count,sort_order";
 const PUBLIC_PROFILE_COLUMNS = "id,username,display_name,avatar_path,level_name,points,signature,created_at";
 const PROFILE_COLUMNS = "id,username,display_name,avatar_path,role,level_name,points,signature,created_at";
@@ -229,6 +237,38 @@ function mapReply(item: ReplyRow): Reply {
   };
 }
 
+async function attachViewerPostState(postList: Post[], supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>) {
+  if (!supabase || postList.length === 0) return postList;
+
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return postList.map((post) => ({ ...post, viewerHasLiked: false, viewerHasBookmarked: false }));
+  }
+
+  const ids = postList.map((post) => post.id);
+  const [reactionResult, bookmarkResult] = await Promise.all([
+    supabase.from("post_reactions").select("post_id").eq("user_id", user.id).eq("reaction", "like").in("post_id", ids),
+    supabase.from("bookmarks").select("post_id").eq("user_id", user.id).in("post_id", ids)
+  ]);
+  if (reactionResult.error) {
+    console.warn(`读取点赞状态失败: ${reactionResult.error.message}`);
+  }
+  if (bookmarkResult.error) {
+    console.warn(`读取收藏状态失败: ${bookmarkResult.error.message}`);
+  }
+
+  const likedSet = new Set((reactionResult.data ?? []).map((item) => (item as PostReactionRow).post_id));
+  const bookmarkedSet = new Set((bookmarkResult.data ?? []).map((item) => (item as BookmarkRow).post_id));
+  return postList.map((post) => ({
+    ...post,
+    viewerHasLiked: likedSet.has(post.id),
+    viewerHasBookmarked: bookmarkedSet.has(post.id)
+  }));
+}
+
 export function getAnonymousProfile(): Profile {
   return {
     id: "deleted",
@@ -272,7 +312,7 @@ export async function getBoards(): Promise<Board[]> {
 export async function getPosts(limit = 50, options: { includeContent?: boolean } = {}): Promise<Post[]> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(posts);
+    return fallback(posts).map((post) => ({ ...post, viewerHasLiked: false, viewerHasBookmarked: false }));
   }
 
   const query = options.includeContent
@@ -280,7 +320,8 @@ export async function getPosts(limit = 50, options: { includeContent?: boolean }
     : supabase.from("posts").select(POST_LIST_COLUMNS);
   const { data, error } = await query.order("updated_at", { ascending: false }).limit(limit);
   if (error) throwDataError("读取主题失败", error);
-  return (data ?? []).map((item) => mapPost(item as PostRow));
+  const postList = (data ?? []).map((item) => mapPost(item as PostRow));
+  return attachViewerPostState(postList, supabase);
 }
 
 export async function getProfiles(): Promise<Profile[]> {
@@ -452,7 +493,11 @@ export async function getPost(id: string | number) {
 export async function getBoardPosts(boardId: number, options: { includeContent?: boolean } = {}) {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(posts.filter((post) => post.boardId === boardId));
+    return fallback(posts.filter((post) => post.boardId === boardId)).map((post) => ({
+      ...post,
+      viewerHasLiked: false,
+      viewerHasBookmarked: false
+    }));
   }
 
   const query = options.includeContent
@@ -460,13 +505,18 @@ export async function getBoardPosts(boardId: number, options: { includeContent?:
     : supabase.from("posts").select(POST_LIST_COLUMNS);
   const { data, error } = await query.eq("board_id", boardId).order("updated_at", { ascending: false }).limit(100);
   if (error) throwDataError("读取板块主题失败", error);
-  return (data ?? []).map((item) => mapPost(item as PostRow));
+  const postList = (data ?? []).map((item) => mapPost(item as PostRow));
+  return attachViewerPostState(postList, supabase);
 }
 
 export async function getProfilePosts(profileId: string) {
   const supabase = await getSupabaseServerClient();
   if (!supabase) {
-    return fallback(posts.filter((post) => post.authorId === profileId));
+    return fallback(posts.filter((post) => post.authorId === profileId)).map((post) => ({
+      ...post,
+      viewerHasLiked: false,
+      viewerHasBookmarked: false
+    }));
   }
 
   const { data, error } = await supabase
@@ -476,7 +526,8 @@ export async function getProfilePosts(profileId: string) {
     .order("updated_at", { ascending: false })
     .limit(50);
   if (error) throwDataError("读取用户主题失败", error);
-  return (data ?? []).map((item) => mapPost(item as PostRow));
+  const postList = (data ?? []).map((item) => mapPost(item as PostRow));
+  return attachViewerPostState(postList, supabase);
 }
 
 export async function getMessages(): Promise<Message[]> {

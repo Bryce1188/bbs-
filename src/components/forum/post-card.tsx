@@ -45,11 +45,11 @@ export function PostCard({ post, author, board }: { post: Post; author: Profile;
             {formatNumber(post.viewCount)}
           </span>
           <span className="flex items-center gap-1.5">
-            <ThumbsUp className="h-4 w-4" />
+            <ThumbsUp className={`h-4 w-4 ${post.viewerHasLiked ? "fill-current text-foreground" : ""}`} />
             {formatNumber(post.likeCount)}
           </span>
           <span className="flex items-center gap-1.5">
-            <Star className="h-4 w-4" />
+            <Star className={`h-4 w-4 ${post.viewerHasBookmarked ? "fill-current text-foreground" : ""}`} />
             {formatNumber(post.collectCount)}
           </span>
         </div>

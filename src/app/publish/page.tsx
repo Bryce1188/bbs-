@@ -3,17 +3,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageAlert } from "@/components/ui/page-alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { createPostAction } from "@/app/actions";
 import { getBoards } from "@/lib/data";
 
-export default async function PublishPage() {
+const ERROR_TEXT: Record<string, string> = {
+  invalid_post: "帖子参数校验失败，请检查标题、正文与板块。",
+  create_failed: "帖子发布失败，请稍后重试。",
+  supabase_not_configured: "当前环境未配置 Supabase，暂时无法发布。"
+};
+
+export default async function PublishPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   const boards = await getBoards();
 
   return (
     <section className="section-shell">
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6">
         <Badge variant="outline">发布主题</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">创建一篇新帖子</h1>

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageAlert } from "@/components/ui/page-alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,11 +9,18 @@ import { createNoticeAction } from "@/app/actions";
 import { getBoards, getNotices } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
-export default async function AdminNoticesPage() {
+const ERROR_TEXT: Record<string, string> = {
+  invalid_notice: "公告参数校验失败，请检查后重试。",
+  create_failed: "公告发布失败，请稍后重试。"
+};
+
+export default async function AdminNoticesPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   const [boards, notices] = await Promise.all([getBoards(), getNotices()]);
 
   return (
     <section className="section-shell">
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <Badge variant="outline">公告管理</Badge>
       <h1 className="mt-3 text-3xl font-semibold tracking-normal">发布社区公告</h1>
       <Card className="glass-panel mt-6">

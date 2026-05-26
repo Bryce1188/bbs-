@@ -3,6 +3,7 @@ import { StatusPill } from "@/components/forum/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageAlert } from "@/components/ui/page-alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,8 +11,13 @@ import { updatePostStatusAction } from "@/app/actions";
 import { getPosts } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
-export default async function AdminPostsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+const ERROR_TEXT: Record<string, string> = {
+  invalid_post: "帖子参数校验失败，请检查后重试。",
+  update_failed: "帖子状态更新失败，请稍后重试。"
+};
+
+export default async function AdminPostsPage({ searchParams }: { searchParams: Promise<{ q?: string; error?: string }> }) {
+  const { q, error } = await searchParams;
   const posts = await getPosts();
   const keyword = (q ?? "").trim().toLowerCase();
   const filteredPosts = keyword
@@ -20,6 +26,7 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: P
 
   return (
     <section className="section-shell">
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6 grid gap-4 md:grid-cols-[1fr_320px] md:items-end">
         <div>
           <Badge variant="outline">帖子管理</Badge>

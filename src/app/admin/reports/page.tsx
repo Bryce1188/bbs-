@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StatusPill } from "@/components/forum/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageAlert } from "@/components/ui/page-alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,11 +10,18 @@ import { updateReportStatusAction } from "@/app/actions";
 import { getReports } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
-export default async function AdminReportsPage() {
+const ERROR_TEXT: Record<string, string> = {
+  invalid_report: "举报参数校验失败，请检查后重试。",
+  update_failed: "举报状态更新失败，请稍后重试。"
+};
+
+export default async function AdminReportsPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
   const reports = await getReports();
 
   return (
     <section className="section-shell">
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6">
         <Badge variant="outline">举报管理</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">举报、处理与申诉</h1>

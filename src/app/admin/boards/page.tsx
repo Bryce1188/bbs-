@@ -2,13 +2,19 @@ import { BoardIcon } from "@/components/forum/board-icon";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PageAlert } from "@/components/ui/page-alert";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { updateBoardAction } from "@/app/actions";
 import { getBoards } from "@/lib/data";
 
-export default async function AdminBoardsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+const ERROR_TEXT: Record<string, string> = {
+  invalid_board: "板块参数校验失败，请检查输入。",
+  update_failed: "板块保存失败，请稍后重试。"
+};
+
+export default async function AdminBoardsPage({ searchParams }: { searchParams: Promise<{ q?: string; error?: string }> }) {
+  const { q, error } = await searchParams;
   const boards = await getBoards();
   const keyword = (q ?? "").trim().toLowerCase();
   const filteredBoards = keyword
@@ -17,6 +23,7 @@ export default async function AdminBoardsPage({ searchParams }: { searchParams: 
 
   return (
     <section className="section-shell">
+      {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
       <div className="mb-6 grid gap-4 md:grid-cols-[1fr_320px] md:items-end">
         <div>
           <Badge variant="outline">板块管理</Badge>

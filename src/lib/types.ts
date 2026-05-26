@@ -36,6 +36,8 @@ export type Post = {
   viewCount: number;
   likeCount: number;
   collectCount: number;
+  viewerHasLiked?: boolean;
+  viewerHasBookmarked?: boolean;
   createdAt: string;
   updatedAt: string;
 };
