@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 174 72% 34%;
+    --primary-foreground: 180 100% 98%;
+    --secondary: 222 22% 92%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 215 20% 92%;
+    --muted-foreground: 215 16% 43%;
+    --accent: 38 92% 56%;
+    --accent-foreground: 30 36% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 18% 84%;
+    --input: 214 18% 84%;
+    --ring: 174 72% 34%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 216 35% 10%;
+    --foreground: 210 40% 98%;
+    --card: 216 32% 13%;
+    --card-foreground: 210 40% 98%;
+    --popover: 216 32% 13%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 174 70% 42%;
+    --primary-foreground: 180 100% 97%;
+    --secondary: 217 24% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 24% 19%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 38 92% 58%;
+    --accent-foreground: 30 36% 12%;
+    --destructive: 0 68% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 22% 24%;
+    --input: 217 22% 24%;
+    --ring: 174 70% 42%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply border border-white/30 bg-white/75 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-white/10 md:backdrop-blur-2xl;
+  }
+
+  .section-shell {
+    @apply container py-8 md:py-10;
+  }
+
+  .line-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.45) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.45) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-panel {
+      @apply bg-card;
+    }
+  }
+}
