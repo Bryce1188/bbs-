@@ -337,7 +337,7 @@ export function ThreeBackground() {
 
   return (
     <div ref={containerRef} className="fixed inset-0 -z-20 h-full w-full overflow-hidden select-none pointer-events-none">
-      <canvas ref={canvasRef} className="block h-full w-full opacity-0 animate-fade-in" style={{ animationDelay: "200ms", animationFillMode: "forwards", animationDuration: "1s" }} />
+      <canvas ref={canvasRef} className="block h-full w-full opacity-0 animate-fade-in blur-[3px]" style={{ animationDelay: "200ms", animationFillMode: "forwards", animationDuration: "1s" }} />
     </div>
   );
 }

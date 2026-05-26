@@ -6,9 +6,10 @@
 [![Vercel](https://img.shields.io/badge/Vercel-Deploy-black?logo=vercel)](https://vercel.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-components-111827)](https://ui.shadcn.com/)
 [![Motion](https://img.shields.io/badge/Motion-React-0055FF)](https://motion.dev/docs/react)
+[![Three.js](https://img.shields.io/badge/Three.js-r128%2B-black?logo=three.js&logoColor=white)](https://threejs.org/)
 [![Audit](https://img.shields.io/badge/npm%20audit-0%20known%20vulnerabilities-22c55e)](#验证)
 
-现代化论坛系统重构版。主线工程使用 **Next.js + Supabase + shadcn/ui + Motion + Vercel**，默认中文，支持主题切换、多语言切换、玻璃质感组件、线性/层级动画和用户指导浮层。
+现代化论坛系统重构版。主线工程使用 **Next.js + Supabase + shadcn/ui + Motion + Three.js + Vercel**，默认中文，支持主题切换、多语言切换、玻璃质感组件、三维交互星轨背景、线性/层级动画和用户指导浮层。
 
 > 课程验收说明：原始 **Spring MVC + MyBatis + Shiro + MySQL + Tomcat** 版本已保存在 `legacy-java-mvc` 分支和 `legacy-java-mvc-snapshot` 标签。Supabase 不是 MySQL，而是 Postgres；因此本仓库采用“双轨交付”：课程版满足 Tomcat/MySQL/MVC 口径，主分支用于现代化远程部署。
 
@@ -20,6 +21,7 @@
 - 用户系统：登录/注册、找回密码、个人主页、等级、积分、签名。
 - 私信通知：私信中心、好友申请、通知中心，Postgres Changes 触发页面刷新。
 - 后台管理：用户、角色 CRUD、板块编辑、帖子、评论显隐、举报、公告、日志筛选分页。
+- 动效与三维增强：集成 **Three.js** 交互式星轨粒子网格背景，支持鼠标排斥、呼吸微光与高斯模糊（Gaussian Blur）景深融合；重构卡片/按键的 **Framer Motion** 物理弹簧微交互；全面重构 Guided Tour 引导浮层切换动画与指示点胶囊弹性拉伸效果。
 - 展示增强：shadcn 风格组件、lucide 图标、玻璃质感、Motion 引导、深浅主题、多语言切换。
 - 生产防护：管理员路由要求 Supabase 已配置、用户已登录且角色为 `admin` 或 `moderator`。
 - 写入闭环：登录/注册、密码重置、发布、回复、点赞、收藏、举报、私信、好友申请、通知已读、后台公告/审核/角色/板块调整通过 Server Actions 接入 Supabase。
@@ -30,7 +32,7 @@
 | --- | --- |
 | 前端 | Next.js App Router、React、TypeScript、Tailwind CSS |
 | UI | shadcn/ui 风格组件、Radix UI、lucide-react |
-| 动画 | Motion for React |
+| 动画 / 3D | Motion for React、Three.js (WebGL Canvas) |
 | 状态/表格 | TanStack Query、TanStack Table |
 | 数据服务 | Supabase Postgres、Auth、Storage、Realtime |
 | 部署 | Vercel |
