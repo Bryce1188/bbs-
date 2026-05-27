@@ -1,12 +1,11 @@
 "use server";
 
-import { createHash, randomInt } from "crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdminAccess } from "@/lib/admin";
-import { getSupabaseServerClient, getSupabaseUntypedServiceClient } from "@/lib/supabase/server";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function text(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
@@ -45,54 +44,6 @@ const authSchema = z.object({
   password: z.string().min(6)
 });
 
-const verificationCodeSchema = z.object({
-  account: z.string().email()
-});
-
-const signUpWithCodeSchema = authSchema.extend({
-  code: z.string().regex(/^\d{6}$/)
-});
-
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
-
-function hashVerificationCode(email: string, code: string) {
-  const secret = process.env.EMAIL_VERIFICATION_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "local-dev-secret";
-  return createHash("sha256").update(`${normalizeEmail(email)}:${code}:${secret}`).digest("hex");
-}
-
-function authPathWith(params: Record<string, string>) {
-  const search = new URLSearchParams(params);
-  return `/auth?${search.toString()}`;
-}
-
-async function sendVerificationEmail(email: string, code: string) {
-  if (process.env.RESEND_API_KEY) {
-    const from = process.env.EMAIL_FROM ?? "BBS 社区 <onboarding@resend.dev>";
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from,
-        to: email,
-        subject: "BBS 社区注册验证码",
-        text: `你的注册验证码是 ${code}，5 分钟内有效。若不是你本人操作，请忽略这封邮件。`
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`resend_failed_${response.status}`);
-    }
-    return;
-  }
-
-  console.info(`[本地开发] ${email} 的注册验证码是：${code}，5 分钟内有效。配置 RESEND_API_KEY 后会发送真实邮件。`);
-}
-
 export async function signInAction(formData: FormData) {
   const parsed = authSchema.safeParse({
     account: text(formData.get("account")),
@@ -111,126 +62,42 @@ export async function signInAction(formData: FormData) {
   redirect(next);
 }
 
-export async function sendVerificationCodeAction(formData: FormData) {
-  const rawAccount = text(formData.get("account"));
-  const parsed = verificationCodeSchema.safeParse({
-    account: rawAccount
-  });
-  if (!parsed.success) redirect("/auth?error=invalid_email&tab=signup");
-
-  const email = normalizeEmail(parsed.data.account);
-  const supabaseAdmin = getSupabaseUntypedServiceClient();
-  if (!supabaseAdmin) redirect(authPathWith({ error: "supabase_service_not_configured", tab: "signup", account: email }));
-
-  const { data: recentCode, error: recentError } = await supabaseAdmin
-    .from("email_verification_codes")
-    .select("created_at")
-    .eq("email", email)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (recentError) redirect(authPathWith({ error: "verification_send_failed", tab: "signup", account: email }));
-
-  if (recentCode?.created_at && Date.now() - new Date(recentCode.created_at).getTime() < 60_000) {
-    redirect(authPathWith({ error: "verification_too_frequent", tab: "signup", account: email }));
-  }
-
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  const codeHash = hashVerificationCode(email, code);
-  const expiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
-
-  const { error: insertError } = await supabaseAdmin.from("email_verification_codes").insert({
-    email,
-    code_hash: codeHash,
-    expires_at: expiresAt
-  });
-  if (insertError) redirect(authPathWith({ error: "verification_send_failed", tab: "signup", account: email }));
-
-  try {
-    await sendVerificationEmail(email, code);
-  } catch (error) {
-    console.error("发送注册验证码失败", error);
-    redirect(authPathWith({ error: "verification_send_failed", tab: "signup", account: email }));
-  }
-
-  redirect(authPathWith({ sent: "1", tab: "signup", account: email }));
-}
-
 export async function signUpAction(formData: FormData) {
-  const rawAccount = text(formData.get("account"));
-  const parsed = signUpWithCodeSchema.safeParse({
+  const parsed = authSchema.safeParse({
     account: text(formData.get("account")),
-    password: text(formData.get("password")),
-    code: text(formData.get("code"))
+    password: text(formData.get("password"))
   });
   if (!parsed.success) {
     const errors = parsed.error.format();
     if (errors.password) {
-      redirect(authPathWith({ error: "weak_password", tab: "signup", account: rawAccount }));
+      redirect("/auth?error=weak_password&tab=signup");
     }
     if (errors.account) {
-      redirect(authPathWith({ error: "invalid_email", tab: "signup", account: rawAccount }));
+      redirect("/auth?error=invalid_email&tab=signup");
     }
-    if (errors.code) {
-      redirect(authPathWith({ error: "verification_invalid", tab: "signup", account: rawAccount }));
-    }
-    redirect(authPathWith({ error: "invalid_credentials", tab: "signup", account: rawAccount }));
-  }
-
-  const email = normalizeEmail(parsed.data.account);
-  const supabaseAdmin = getSupabaseUntypedServiceClient();
-  if (!supabaseAdmin) redirect(authPathWith({ error: "supabase_service_not_configured", tab: "signup", account: email }));
-
-  const { data: verification, error: verificationError } = await supabaseAdmin
-    .from("email_verification_codes")
-    .select("id,code_hash,expires_at,attempts,used_at")
-    .eq("email", email)
-    .is("used_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (verificationError) redirect(authPathWith({ error: "verification_failed", tab: "signup", account: email }));
-  if (!verification) redirect(authPathWith({ error: "verification_invalid", tab: "signup", account: email }));
-  if (verification.used_at) redirect(authPathWith({ error: "verification_invalid", tab: "signup", account: email }));
-  if (new Date(verification.expires_at).getTime() < Date.now()) {
-    redirect(authPathWith({ error: "verification_expired", tab: "signup", account: email }));
-  }
-  if ((verification.attempts ?? 0) >= 5) {
-    redirect(authPathWith({ error: "verification_attempts_exceeded", tab: "signup", account: email }));
-  }
-
-  const submittedHash = hashVerificationCode(email, parsed.data.code);
-  if (submittedHash !== verification.code_hash) {
-    await supabaseAdmin
-      .from("email_verification_codes")
-      .update({ attempts: (verification.attempts ?? 0) + 1 })
-      .eq("id", verification.id);
-    redirect(authPathWith({ error: "verification_invalid", tab: "signup", account: email }));
+    redirect("/auth?error=invalid_credentials&tab=signup");
   }
 
   const supabase = await getSupabaseOrRedirect("/auth");
   const { error } = await supabase.rpc("register_confirmed_user", {
-    user_email: email,
+    user_email: parsed.data.account.trim().toLowerCase(),
     user_password: parsed.data.password
   });
 
   if (error) {
     const msg = error.message || "";
     if (msg.includes("user_already_exists")) {
-      redirect(authPathWith({ error: "user_already_exists", tab: "signup", account: email }));
+      redirect("/auth?error=user_already_exists&tab=signup");
     } else if (msg.includes("invalid_email")) {
-      redirect(authPathWith({ error: "invalid_email", tab: "signup", account: email }));
+      redirect("/auth?error=invalid_email&tab=signup");
     } else if (msg.includes("weak_password")) {
-      redirect(authPathWith({ error: "weak_password", tab: "signup", account: email }));
+      redirect("/auth?error=weak_password&tab=signup");
     }
-    redirect(authPathWith({ error: "sign_up_failed", tab: "signup", account: email }));
+    redirect("/auth?error=sign_up_failed&tab=signup");
   }
 
-  await supabaseAdmin.from("email_verification_codes").update({ used_at: new Date().toISOString() }).eq("id", verification.id);
-
   const { error: signInError } = await supabase.auth.signInWithPassword({
-    email,
+    email: parsed.data.account.trim().toLowerCase(),
     password: parsed.data.password
   });
 

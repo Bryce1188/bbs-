@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { KeyRound, Lock, LogIn, Mail, Send, UserRoundPlus } from "lucide-react";
-import { sendVerificationCodeAction, signInAction, signUpAction } from "@/app/actions";
+import { Lock, LogIn, Mail, RefreshCw, ShieldCheck, UserRoundPlus } from "lucide-react";
+import { signInAction, signUpAction } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
@@ -17,38 +18,19 @@ interface AuthFormProps {
   errorMessage: string | null;
   created?: boolean;
   reset?: boolean;
-  verificationSent?: boolean;
   initialTab?: TabType;
-  initialAccount?: string;
+  initialCaptcha: string;
 }
 
-export function AuthForm({
-  next,
-  error,
-  errorMessage,
-  created,
-  reset,
-  verificationSent,
-  initialTab = "signin",
-  initialAccount = ""
-}: AuthFormProps) {
+const CAPTCHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function createCaptcha() {
+  return Array.from({ length: 5 }, () => CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)]).join("");
+}
+
+export function AuthForm({ next, error, errorMessage, created, reset, initialTab = "signin", initialCaptcha }: AuthFormProps) {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    if (
-      initialTab === "signup" ||
-      (error &&
-        [
-          "weak_password",
-          "user_already_exists",
-          "sign_up_failed",
-          "verification_send_failed",
-          "verification_too_frequent",
-          "verification_invalid",
-          "verification_expired",
-          "verification_failed",
-          "verification_attempts_exceeded",
-          "supabase_service_not_configured"
-        ].includes(error))
-    ) {
+    if (initialTab === "signup" || (error && ["weak_password", "user_already_exists", "sign_up_failed"].includes(error))) {
       return "signup";
     }
     return "signin";
@@ -57,14 +39,35 @@ export function AuthForm({
   const [localError, setLocalError] = useState<string | null>(errorMessage);
   const [showCreated, setShowCreated] = useState<boolean>(!!created);
   const [showReset, setShowReset] = useState<boolean>(!!reset);
-  const [showSent, setShowSent] = useState<boolean>(!!verificationSent);
+  const [captcha, setCaptcha] = useState(initialCaptcha);
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaTouched, setCaptchaTouched] = useState(false);
+
+  const isCaptchaValid = useMemo(() => captchaInput.trim().toUpperCase() === captcha, [captcha, captchaInput]);
+
+  const refreshCaptcha = () => {
+    setCaptcha(createCaptcha());
+    setCaptchaInput("");
+    setCaptchaTouched(false);
+    setLocalError(null);
+  };
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
     setLocalError(null);
     setShowCreated(false);
     setShowReset(false);
-    setShowSent(false);
+    if (tab === "signup") {
+      refreshCaptcha();
+    }
+  };
+
+  const handleSignupSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    setCaptchaTouched(true);
+    if (!isCaptchaValid) {
+      event.preventDefault();
+      setLocalError("人机验证码错误，请看清图案后重新输入。");
+    }
   };
 
   return (
@@ -88,16 +91,6 @@ export function AuthForm({
             className="rounded-md bg-muted/70 p-3 text-sm text-muted-foreground"
           >
             密码已更新，请使用新密码登录。
-          </motion.div>
-        )}
-        {showSent && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="rounded-md bg-primary/10 p-3 text-sm text-primary"
-          >
-            验证码已发送，5 分钟内有效。本地开发未配置邮件服务时，请在运行终端查看验证码。
           </motion.div>
         )}
         {localError && (
@@ -207,21 +200,13 @@ export function AuthForm({
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
             >
-              <form action={signUpAction} className="grid gap-3">
+              <form action={signUpAction} onSubmit={handleSignupSubmit} className="grid gap-3">
                 <div className="grid gap-1.5">
                   <label className="flex items-center gap-1.5 text-sm font-medium" htmlFor="signup-account">
                     <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                     邮箱
                   </label>
-                  <Input
-                    id="signup-account"
-                    name="account"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="name@example.com"
-                    defaultValue={initialAccount}
-                    required
-                  />
+                  <Input id="signup-account" name="account" type="email" autoComplete="email" placeholder="name@example.com" required />
                 </div>
                 <div className="grid gap-1.5">
                   <label className="flex items-center gap-1.5 text-sm font-medium" htmlFor="signup-password">
@@ -238,35 +223,44 @@ export function AuthForm({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <label className="flex items-center gap-1.5 text-sm font-medium" htmlFor="signup-code">
-                    <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
-                    邮箱验证码
+                  <label className="flex items-center gap-1.5 text-sm font-medium" htmlFor="signup-captcha">
+                    <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                    人机验证码
                   </label>
-                  <div className="flex gap-2">
+                  <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
                     <Input
-                      id="signup-code"
-                      name="code"
-                      inputMode="numeric"
-                      pattern="[0-9]{6}"
-                      maxLength={6}
-                      placeholder="6 位数字"
+                      id="signup-captcha"
+                      value={captchaInput}
+                      onChange={(event) => {
+                        setCaptchaInput(event.target.value);
+                        setCaptchaTouched(true);
+                        if (localError?.includes("人机验证码")) setLocalError(null);
+                      }}
+                      autoComplete="off"
+                      placeholder="输入右侧图案"
+                      aria-invalid={captchaTouched && !isCaptchaValid}
+                      required
                     />
-                    <SubmitButton
-                      type="submit"
-                      variant="secondary"
-                      pendingText="发送中..."
-                      formAction={sendVerificationCodeAction}
-                      className="shrink-0"
+                    <button
+                      type="button"
+                      onClick={refreshCaptcha}
+                      title="点击刷新验证码"
+                      className="relative h-11 overflow-hidden rounded-md border border-border/70 bg-muted/60 px-3 font-mono text-lg font-bold tracking-[0.32em] text-foreground shadow-inner transition hover:bg-muted"
                     >
-                      <Send className="h-4 w-4" />
-                      发送验证码
-                    </SubmitButton>
+                      <span className="absolute inset-x-2 top-1/2 h-px rotate-[-8deg] bg-primary/40" />
+                      <span className="absolute inset-x-3 top-1/3 h-px rotate-[10deg] bg-foreground/20" />
+                      <span className="relative inline-block -rotate-2 select-none">{captcha || "-----"}</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span>大小写都可以，点击图案可刷新。</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={refreshCaptcha} className="h-7 gap-1 px-2 text-xs">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      换一张
+                    </Button>
                   </div>
                 </div>
-                <p className="text-xs leading-normal text-muted-foreground">
-                  验证码 5 分钟内有效。同一邮箱 60 秒内只能发送一次；本地未配置邮件服务时，验证码会打印在运行终端。
-                </p>
-                <SubmitButton variant="glass" className="mt-1 w-full" pendingText="创建中...">
+                <SubmitButton variant="glass" className="mt-1 w-full" pendingText="创建中..." disabled={!captcha || !isCaptchaValid}>
                   <UserRoundPlus className="h-4 w-4" />
                   验证并创建账号
                 </SubmitButton>

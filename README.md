@@ -125,25 +125,17 @@ npm run dev:win
 
 该脚本会自动停止占用 `3000` 端口的旧进程，然后重新启动项目。
 
-## 邮箱验证码注册
+## 人机验证码注册
 
-当前注册流程已改为邮箱验证码：
+当前注册页使用本地图形验证码：
 
 1. 注册页输入邮箱和密码。
-2. 点击“发送验证码”。
-3. 后端生成 6 位数字验证码。
-4. 验证码 5 分钟内有效，同一邮箱 60 秒内不能重复发送。
-5. 输入正确验证码后才会创建 Supabase 账号。
+2. 页面随机生成 5 位字母数字图案。
+3. 点击验证码图案或“换一张”可以刷新。
+4. 输入验证码时大小写都可以。
+5. 验证码输入正确后，才允许提交注册。
 
-本地开发如果没有配置真实邮件服务，验证码会打印在运行 `npm run dev` 的终端里。配置 Resend 后会发送真实邮件：
-
-```env
-EMAIL_VERIFICATION_SECRET=change-me-to-a-random-secret
-RESEND_API_KEY=
-EMAIL_FROM=BBS <onboarding@resend.dev>
-```
-
-注意：邮箱验证码注册需要真实 Supabase 数据库。只使用 mock 模式时，可以浏览页面，但不能真正发送验证码或创建账号。
+注意：图形验证码只负责阻止误提交和简单的人机校验。真正创建账号仍然需要配置 Supabase；只使用 mock 模式时，可以浏览页面，但不能真正注册登录。
 
 ## Supabase 初始化
 
@@ -197,9 +189,6 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ADMIN_DEMO_MODE=false
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx
 DATABASE_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
-EMAIL_VERIFICATION_SECRET=change-me-to-a-random-secret
-RESEND_API_KEY=
-EMAIL_FROM=BBS <onboarding@resend.dev>
 ```
 
 本地 Supabase 启动后，常用地址通常是：

@@ -65,10 +65,6 @@ DATABASE_URL=$($values["DATABASE_URL"])
 
 UPLOAD_BUCKET_AVATARS=avatars
 UPLOAD_BUCKET_POST_IMAGES=post-images
-
-EMAIL_VERIFICATION_SECRET=local-dev-email-code-secret
-RESEND_API_KEY=
-EMAIL_FROM=BBS <onboarding@resend.dev>
 "@
 
 Set-Content -LiteralPath ".env.local" -Value $envLocal -Encoding UTF8
