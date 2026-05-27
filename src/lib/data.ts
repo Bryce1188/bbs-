@@ -328,12 +328,15 @@ export async function getHomeStats() {
   const postsRow = await queryOne<{ total: number }>("select count(*) as total from posts");
   const repliesRow = await queryOne<{ total: number }>("select count(*) as total from post_replies");
   const todayPostsRow = await queryOne<{ total: number }>("select count(*) as total from posts where date(created_at) = current_date()");
+  const onlineRow = await queryOne<{ total: number }>(
+    "select count(distinct user_id) as total from user_sessions where expires_at > now()"
+  );
 
   return {
     users: Number(usersRow?.total ?? 0),
     posts: Number(postsRow?.total ?? 0),
     replies: Number(repliesRow?.total ?? 0),
-    online: 0,
+    online: Number(onlineRow?.total ?? 0),
     todayPosts: Number(todayPostsRow?.total ?? 0)
   };
 }
