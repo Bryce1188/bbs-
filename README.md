@@ -66,9 +66,48 @@
 
 ## 本地运行
 
+### 1. 下载项目
+
+```bash
+git clone https://github.com/Bryce1188/bbs-.git
+cd bbs-
+```
+
+### 2. 安装依赖
+
 ```bash
 npm install
+```
+
+### 3. 配置环境变量
+
+复制一份本地环境变量文件：
+
+```bash
 cp .env.example .env.local
+```
+
+Windows PowerShell 可以使用：
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+如果只想先看页面效果，可以把 `.env.local` 里的 Supabase 配置留空：
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+ADMIN_DEMO_MODE=true
+```
+
+未配置 Supabase 时，页面会自动使用 `src/lib/mock-data.ts` 中的中文演示数据，方便先查看首页、板块、帖子、用户、私信和后台 UI。
+
+### 4. 启动项目
+
+```bash
 npm run dev
 ```
 
@@ -78,7 +117,33 @@ npm run dev
 http://localhost:3000
 ```
 
-未配置 Supabase 时，页面会自动使用 `src/lib/mock-data.ts` 中的演示数据，方便先看 UI 和功能路径。
+Windows 如果遇到 `3000` 端口被旧进程占用，可以使用：
+
+```powershell
+npm run dev:win
+```
+
+该脚本会自动停止占用 `3000` 端口的旧进程，然后重新启动项目。
+
+## 邮箱验证码注册
+
+当前注册流程已改为邮箱验证码：
+
+1. 注册页输入邮箱和密码。
+2. 点击“发送验证码”。
+3. 后端生成 6 位数字验证码。
+4. 验证码 5 分钟内有效，同一邮箱 60 秒内不能重复发送。
+5. 输入正确验证码后才会创建 Supabase 账号。
+
+本地开发如果没有配置真实邮件服务，验证码会打印在运行 `npm run dev` 的终端里。配置 Resend 后会发送真实邮件：
+
+```env
+EMAIL_VERIFICATION_SECRET=change-me-to-a-random-secret
+RESEND_API_KEY=
+EMAIL_FROM=BBS <onboarding@resend.dev>
+```
+
+注意：邮箱验证码注册需要真实 Supabase 数据库。只使用 mock 模式时，可以浏览页面，但不能真正发送验证码或创建账号。
 
 ## Supabase 初始化
 
@@ -89,6 +154,14 @@ npm install
 npx supabase start
 npx supabase db reset
 ```
+
+Windows 本地可以直接运行项目脚本：
+
+```powershell
+npm run setup:supabase
+```
+
+该脚本会检查 Docker Desktop、启动本地 Supabase、执行迁移和重置数据库，并自动写入 `.env.local`。Supabase 本地服务依赖 Docker Desktop，如果提示找不到 `docker`，请先安装并启动 Docker Desktop。
 
 常用脚本：
 
@@ -124,7 +197,21 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ADMIN_DEMO_MODE=false
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx
 DATABASE_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
+EMAIL_VERIFICATION_SECRET=change-me-to-a-random-secret
+RESEND_API_KEY=
+EMAIL_FROM=BBS <onboarding@resend.dev>
 ```
+
+本地 Supabase 启动后，常用地址通常是：
+
+```text
+App:    http://localhost:3000
+API:    http://127.0.0.1:54321
+DB:     postgresql://postgres:postgres@127.0.0.1:54322/postgres
+Studio: http://127.0.0.1:54323
+```
+
+`supabase/demo-data.sql` 中提供了演示用户、帖子、点赞和私信数据。真实数据库准备好后，可在 Supabase Studio SQL Editor 中执行该文件内容导入演示数据。
 
 ## Vercel 部署
 

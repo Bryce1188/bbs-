@@ -10,9 +10,11 @@
     "test": "npm run typecheck && npm run lint && npm run build",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
+    "setup:supabase": "powershell -ExecutionPolicy Bypass -File scripts/setup-local-supabase.ps1",
     "supabase:start": "npx supabase start",
     "supabase:reset": "npx supabase db reset",
-    "supabase:types": "npx supabase gen types typescript --local > src/lib/supabase/database.types.ts"
+    "supabase:types": "npx supabase gen types typescript --local > src/lib/supabase/database.types.ts",
+    "dev:win": "powershell -ExecutionPolicy Bypass -File scripts/dev-windows.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
