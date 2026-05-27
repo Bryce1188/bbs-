@@ -42,7 +42,7 @@ function captchaNoise(seed: string) {
 
 export function AuthForm({ next, error, errorMessage, created, reset, initialTab = "signin", initialCaptcha }: AuthFormProps) {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    if (initialTab === "signup" || (error && ["weak_password", "user_already_exists", "sign_up_failed"].includes(error))) {
+    if (initialTab === "signup" || (error && ["weak_password", "user_already_exists", "sign_up_failed", "invalid_nickname"].includes(error))) {
       return "signup";
     }
     return "signin";
@@ -232,6 +232,21 @@ export function AuthForm({ next, error, errorMessage, created, reset, initialTab
                     type="password"
                     autoComplete="new-password"
                     placeholder="密码不少于 6 位"
+                    required
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <label className="flex items-center gap-1.5 text-sm font-medium" htmlFor="signup-nickname">
+                    <UserRoundPlus className="h-3.5 w-3.5 text-muted-foreground" />
+                    昵称
+                  </label>
+                  <Input
+                    id="signup-nickname"
+                    name="nickname"
+                    type="text"
+                    autoComplete="nickname"
+                    maxLength={24}
+                    placeholder="例如：Bryce"
                     required
                   />
                 </div>

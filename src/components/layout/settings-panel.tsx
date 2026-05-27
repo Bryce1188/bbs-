@@ -1,59 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { LogIn, LogOut, Settings2, ShieldCheck, UserCircle2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LanguageToggle } from "@/components/layout/language-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+
+type SessionResponse = {
+  user: null | {
+    id: string;
+    email: string;
+  };
+};
 
 export function SettingsPanel() {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const reduceMotion = useReducedMotion();
-  const pathname = usePathname();
 
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
-
-    let mounted = true;
-    void supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      setUserId(data.user?.id ?? null);
-      setUserEmail(data.user?.email ?? "");
-    });
-
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-      setUserEmail(session?.user?.email ?? "");
-    });
-
-    return () => {
-      mounted = false;
-      data.subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
-
-    let active = true;
-    void supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setUserId(data.user?.id ?? null);
-      setUserEmail(data.user?.email ?? "");
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname]);
+  async function refreshSession() {
+    const res = await fetch("/api/auth/session", { method: "GET", cache: "no-store" });
+    if (!res.ok) return;
+    const data = (await res.json()) as SessionResponse;
+    setUserId(data.user?.id ?? null);
+    setUserEmail(data.user?.email ?? "");
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -69,16 +43,22 @@ export function SettingsPanel() {
   }, [open]);
 
   async function signOut() {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     setOpen(false);
     window.location.href = "/";
   }
 
   return (
     <>
-      <Button variant="glass" size="icon" aria-label="打开设置面板" onClick={() => setOpen(true)}>
+      <Button
+        variant="glass"
+        size="icon"
+        aria-label="打开设置面板"
+        onClick={() => {
+          setOpen(true);
+          void refreshSession();
+        }}
+      >
         <Settings2 className="h-4 w-4" />
       </Button>
       <AnimatePresence>

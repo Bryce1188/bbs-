@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requestPasswordResetAction, updatePasswordAction } from "@/app/actions";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
 
 const errorMessages: Record<string, string> = {
   invalid_email: "邮箱格式不正确：请输入有效的电子邮箱地址。",
@@ -18,13 +18,13 @@ const errorMessages: Record<string, string> = {
 export default async function ResetPasswordPage({
   searchParams
 }: {
-  searchParams: Promise<{ sent?: string; error?: string }>;
+  searchParams: Promise<{ sent?: string; error?: string; token?: string }>;
 }) {
-  const { sent, error } = await searchParams;
+  const { sent, error, token } = await searchParams;
   const errorMessage = error ? (errorMessages[error] || `操作失败：${error}`) : null;
 
-  const supabase = await getSupabaseServerClient();
-  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
+  const user = await getCurrentUser();
+  const canUpdatePassword = Boolean(user || token);
 
   return (
     <section className="section-shell grid min-h-[calc(100svh-4rem)] items-center">
@@ -32,19 +32,22 @@ export default async function ResetPasswordPage({
         <CardContent className="p-6">
           <Badge variant="outline">账号恢复</Badge>
           <h1 className="mt-3 text-2xl font-semibold tracking-normal">
-            {user ? "设置新密码" : "找回密码"}
+            {canUpdatePassword ? "设置新密码" : "找回密码"}
           </h1>
           {sent ? <p className="mt-3 rounded-md bg-muted/70 p-3 text-sm text-muted-foreground">重置邮件已发送，请从邮箱打开链接后设置新密码。</p> : null}
           {errorMessage ? <p className="mt-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{errorMessage}</p> : null}
 
-          {user ? (
+          {canUpdatePassword ? (
             <form action={updatePasswordAction} className="mt-6 grid gap-3">
-              <div className="text-xs text-muted-foreground bg-muted/35 p-3 rounded-md flex items-start gap-2 border">
-                <ShieldAlert className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>
-                  正在为账户 <span className="font-semibold text-foreground">{user.email}</span> 设置新密码。
-                </span>
-              </div>
+              {user ? (
+                <div className="text-xs text-muted-foreground bg-muted/35 p-3 rounded-md flex items-start gap-2 border">
+                  <ShieldAlert className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    正在为账户 <span className="font-semibold text-foreground">{user.email}</span> 设置新密码。
+                  </span>
+                </div>
+              ) : null}
+              <input type="hidden" name="token" value={token ?? ""} />
               <label className="grid gap-1.5 text-sm font-medium" htmlFor="new-password">
                 新密码
                 <Input id="new-password" name="password" type="password" autoComplete="new-password" placeholder="至少 6 位" required />

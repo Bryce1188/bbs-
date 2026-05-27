@@ -47,7 +47,7 @@ export default async function HomePage() {
             <div className="glass-panel relative overflow-hidden rounded-lg p-4">
               <div className="absolute inset-x-8 top-0 h-px animate-line-drift bg-primary/70" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <StatCard label={<LocaleText id="registeredUsers" />} value={stats.users} icon={Users} hint="Supabase Auth + profiles" />
+        <StatCard label={<LocaleText id="registeredUsers" />} value={stats.users} icon={Users} hint="MySQL users_auth + profiles" />
                 <StatCard label={<LocaleText id="totalPosts" />} value={stats.posts} icon={MessageCircle} hint="Postgres planned count" />
                 <StatCard label={<LocaleText id="todayPosts" />} value={stats.todayPosts} icon={Activity} hint="Postgres planned count" />
                 <StatCard label={<LocaleText id="onlineMembers" />} value={stats.online} icon={Radio} hint="Realtime Presence" />

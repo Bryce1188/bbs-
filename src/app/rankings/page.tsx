@@ -1,13 +1,14 @@
+import Link from "next/link";
 import { Flame, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getPosts, getProfiles } from "@/lib/data";
+import { getHotTopics, getProfiles } from "@/lib/data";
 import { percent } from "@/lib/utils";
 
 export default async function RankingsPage() {
-  const [posts, profiles] = await Promise.all([getPosts(), getProfiles()]);
-  const topPosts = [...posts].sort((a, b) => b.viewCount + b.likeCount - (a.viewCount + a.likeCount));
-  const maxPoints = Math.max(...profiles.map((profile) => profile.points));
+  const [topPosts, profiles] = await Promise.all([getHotTopics(20), getProfiles()]);
+  const rankedProfiles = [...profiles].sort((a, b) => b.points - a.points || a.displayName.localeCompare(b.displayName));
+  const maxPoints = Math.max(1, ...rankedProfiles.map((profile) => profile.points));
 
   return (
     <section className="section-shell">
@@ -23,7 +24,7 @@ export default async function RankingsPage() {
               用户积分榜
             </div>
             <div className="space-y-4">
-              {profiles.map((profile, index) => (
+              {rankedProfiles.map((profile, index) => (
                 <div key={profile.id}>
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span>{index + 1}. {profile.displayName}</span>
@@ -45,7 +46,11 @@ export default async function RankingsPage() {
             </div>
             <div className="space-y-3">
               {topPosts.map((post, index) => (
-                <div key={post.id} className="rounded-md bg-muted/50 p-3">
+                <Link
+                  key={post.id}
+                  href={`/posts/${post.id}`}
+                  className="block rounded-md bg-muted/50 p-3 transition-colors hover:bg-muted"
+                >
                   <div className="flex gap-3">
                     <span className="text-sm font-semibold text-primary">#{index + 1}</span>
                     <div>
@@ -53,7 +58,7 @@ export default async function RankingsPage() {
                       <p className="mt-1 text-xs text-muted-foreground">浏览 {post.viewCount} · 点赞 {post.likeCount} · 回复 {post.replyCount}</p>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </CardContent>

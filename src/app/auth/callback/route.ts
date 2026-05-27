@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function safeNextPath(value: string | null) {
   return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
@@ -7,12 +6,11 @@ function safeNextPath(value: string | null) {
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
   const next = safeNextPath(requestUrl.searchParams.get("next"));
+  const token = requestUrl.searchParams.get("token");
 
-  if (code) {
-    const supabase = await getSupabaseServerClient();
-    await supabase?.auth.exchangeCodeForSession(code);
+  if (token && next.startsWith("/auth/reset")) {
+    return NextResponse.redirect(new URL(`/auth/reset?token=${encodeURIComponent(token)}`, requestUrl.origin));
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin));

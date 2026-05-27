@@ -56,7 +56,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </Card>
         )) : (
           <Card className="glass-panel">
-            <CardContent className="p-6 text-sm text-muted-foreground">暂无通知。登录后会从 Supabase 读取你的提醒。</CardContent>
+            <CardContent className="p-6 text-sm text-muted-foreground">暂无通知。登录后会从 MySQL 读取你的提醒。</CardContent>
           </Card>
         )}
       </div>

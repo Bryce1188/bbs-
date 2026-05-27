@@ -1,15 +1,5 @@
-"use client";
-
-import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "@/lib/supabase/database.types";
-
+// Legacy compatibility stub.
+// The project has migrated to MySQL + Session and no longer uses Supabase runtime clients.
 export function createSupabaseBrowserClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!url || !key) {
-    return null;
-  }
-
-  return createBrowserClient<Database>(url, key);
+  return null;
 }

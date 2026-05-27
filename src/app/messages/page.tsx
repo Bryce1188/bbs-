@@ -63,7 +63,7 @@ export default async function MessagesPage({
       <div className="mb-6">
         <Badge variant="outline">Realtime</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-normal">私信中心</h1>
-        <p className="mt-2 text-sm text-muted-foreground">私信列表、好友申请和通知刷新已接入 Supabase Auth/RLS 与 Postgres Changes。</p>
+        <p className="mt-2 text-sm text-muted-foreground">私信列表、好友申请和通知刷新已接入 MySQL Session 与 Socket.IO 实时推送。</p>
       </div>
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <Card className="glass-panel min-w-0 overflow-hidden">
@@ -156,7 +156,7 @@ export default async function MessagesPage({
                 </Link>
               );
             }) : (
-              <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">暂无会话。登录后会从 Supabase 读取你的私信。</p>
+              <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">暂无会话。登录后会从 MySQL 读取你的私信。</p>
             )}
           </CardContent>
         </Card>

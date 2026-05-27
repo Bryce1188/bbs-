@@ -5,10 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 const steps = [
   { icon: MousePointerClick, title: "浏览社区", text: "从首页查看热度、进入板块、打开帖子详情并参与回复。" },
   { icon: Palette, title: "切换主题与语言", text: "右上角提供深浅主题和中文/英文切换，默认中文。" },
-  { icon: Database, title: "连接 Supabase", text: "配置 `.env.local` 后，数据读取会优先走 Supabase，未配置时使用演示数据。" },
+  { icon: Database, title: "连接 MySQL", text: "配置 `.env.local` 后，数据读取会优先走本地 MySQL，未配置时使用演示数据。" },
   { icon: ShieldCheck, title: "后台管理", text: "后台入口覆盖用户、角色、板块、帖子、评论、举报、公告和日志。" },
   { icon: BadgeCheck, title: "课程验收", text: "`legacy-java-mvc` 分支保留 Tomcat/MySQL/MVC 版本，主分支用于 Vercel 展示。" },
-  { icon: Rocket, title: "远程部署", text: "完成环境变量后运行 Vercel 部署，Storage 和 Realtime 由 Supabase 承担。" }
+  { icon: Rocket, title: "本地部署", text: "完成环境变量后运行 Node 自定义服务，实时能力由 Socket.IO 提供。" }
 ];
 
 export default function GuidePage() {

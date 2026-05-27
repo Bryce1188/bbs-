@@ -12,9 +12,10 @@ const errorMessages: Record<string, string> = {
   invalid_credentials: "邮箱或密码错误，请确认后重新登录。",
   weak_password: "密码安全级别低：长度不能少于 6 位。",
   invalid_email: "邮箱格式不正确：请输入有效的电子邮箱地址。",
+  invalid_nickname: "昵称格式不正确：长度需要在 2~24 个字符之间。",
   user_already_exists: "该邮箱已被注册：请直接登录，或通过忘记密码找回。",
   sign_up_failed: "注册失败：数据库可能暂时不可用，请稍后再试。",
-  supabase_not_configured: "数据库服务未配置，请先配置 Supabase。"
+  db_not_configured: "数据库服务未配置，请先配置本地 MySQL。"
 };
 
 type AuthSearchParams = {
@@ -34,7 +35,7 @@ export default async function AuthPage({ searchParams }: { searchParams: Promise
     <section className="section-shell grid min-h-[calc(100svh-4rem)] items-center">
       <Card className="glass-panel mx-auto w-full max-w-md">
         <CardContent className="p-6">
-          <Badge variant="outline">Supabase Auth</Badge>
+          <Badge variant="outline">MySQL Auth</Badge>
           <h1 className="mt-3 mb-4 text-2xl font-semibold tracking-normal">登录或注册</h1>
 
           <AuthForm

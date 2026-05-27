@@ -2,43 +2,36 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getRealtimeSocket } from "@/lib/realtime/client";
 
 type RealtimeRefreshProps = {
   table: "private_messages" | "notifications" | "posts" | "post_replies";
-  filter?: string;
 };
 
-export function RealtimeRefresh({ table, filter }: RealtimeRefreshProps) {
+export function RealtimeRefresh({ table }: RealtimeRefreshProps) {
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
+    if (!["private_messages", "notifications"].includes(table)) return;
+    const socket = getRealtimeSocket();
 
     let timer: number | undefined;
-    const channel = supabase
-      .channel(`page-refresh:${table}:${filter ?? "all"}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table,
-          ...(filter ? { filter } : {})
-        },
-        () => {
-          window.clearTimeout(timer);
-          timer = window.setTimeout(() => router.refresh(), 350);
-        }
-      )
-      .subscribe();
+    const refresh = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => router.refresh(), 250);
+    };
+
+    socket.on("message:new", refresh);
+    socket.on("notification:new", refresh);
+    socket.on("notification:read", refresh);
 
     return () => {
       window.clearTimeout(timer);
-      void supabase.removeChannel(channel);
+      socket.off("message:new", refresh);
+      socket.off("notification:new", refresh);
+      socket.off("notification:read", refresh);
     };
-  }, [filter, router, table]);
+  }, [router, table]);
 
   return null;
 }
