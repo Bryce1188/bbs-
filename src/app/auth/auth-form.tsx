@@ -28,6 +28,18 @@ function createCaptcha() {
   return Array.from({ length: 5 }, () => CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)]).join("");
 }
 
+function captchaNoise(seed: string) {
+  return Array.from({ length: 18 }, (_, index) => {
+    const code = seed.charCodeAt(index % seed.length) || 41;
+    return {
+      left: (code * (index + 7)) % 100,
+      top: (code * (index + 13)) % 100,
+      size: 1 + ((code + index) % 3),
+      opacity: 0.12 + ((code + index) % 5) * 0.04
+    };
+  });
+}
+
 export function AuthForm({ next, error, errorMessage, created, reset, initialTab = "signin", initialCaptcha }: AuthFormProps) {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     if (initialTab === "signup" || (error && ["weak_password", "user_already_exists", "sign_up_failed"].includes(error))) {
@@ -44,6 +56,7 @@ export function AuthForm({ next, error, errorMessage, created, reset, initialTab
   const [captchaTouched, setCaptchaTouched] = useState(false);
 
   const isCaptchaValid = useMemo(() => captchaInput.trim().toUpperCase() === captcha, [captcha, captchaInput]);
+  const noise = useMemo(() => captchaNoise(captcha), [captcha]);
 
   const refreshCaptcha = () => {
     setCaptcha(createCaptcha());
@@ -245,11 +258,39 @@ export function AuthForm({ next, error, errorMessage, created, reset, initialTab
                       type="button"
                       onClick={refreshCaptcha}
                       title="点击刷新验证码"
-                      className="relative h-11 overflow-hidden rounded-md border border-border/70 bg-muted/60 px-3 font-mono text-lg font-bold tracking-[0.32em] text-foreground shadow-inner transition hover:bg-muted"
+                      className="relative h-12 overflow-hidden rounded-md border border-border/70 bg-[linear-gradient(135deg,hsl(var(--muted))_0%,hsl(var(--background))_52%,hsl(var(--muted))_100%)] px-3 font-mono text-lg font-bold text-foreground shadow-inner transition hover:bg-muted"
                     >
-                      <span className="absolute inset-x-2 top-1/2 h-px rotate-[-8deg] bg-primary/40" />
-                      <span className="absolute inset-x-3 top-1/3 h-px rotate-[10deg] bg-foreground/20" />
-                      <span className="relative inline-block -rotate-2 select-none">{captcha || "-----"}</span>
+                      <span className="absolute inset-x-0 top-1/2 h-px rotate-[-10deg] bg-primary/45 blur-[0.4px]" />
+                      <span className="absolute inset-x-1 top-1/3 h-px rotate-[12deg] bg-foreground/25 blur-[0.6px]" />
+                      <span className="absolute inset-x-2 bottom-3 h-px rotate-[5deg] bg-foreground/20 blur-[0.5px]" />
+                      {noise.map((dot, index) => (
+                        <span
+                          key={`${captcha}-${index}`}
+                          className="absolute rounded-full bg-foreground blur-[0.2px]"
+                          style={{
+                            left: `${dot.left}%`,
+                            top: `${dot.top}%`,
+                            width: dot.size,
+                            height: dot.size,
+                            opacity: dot.opacity
+                          }}
+                        />
+                      ))}
+                      <span className="relative flex select-none items-center justify-center gap-0.5 blur-[0.35px]">
+                        {(captcha || "-----").split("").map((char, index) => (
+                          <span
+                            key={`${char}-${index}`}
+                            className="inline-block"
+                            style={{
+                              transform: `translateY(${index % 2 === 0 ? "-1px" : "2px"}) rotate(${[-8, 5, -3, 8, -6][index] ?? 0}deg)`,
+                              letterSpacing: "0.16em",
+                              opacity: 0.84 + index * 0.02
+                            }}
+                          >
+                            {char}
+                          </span>
+                        ))}
+                      </span>
                     </button>
                   </div>
                   <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
