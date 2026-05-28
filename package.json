@@ -11,7 +11,9 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "setup:mysql": "powershell -ExecutionPolicy Bypass -File scripts/setup-local-mysql.ps1",
-    "dev:win": "powershell -ExecutionPolicy Bypass -File scripts/dev-windows.ps1"
+    "dev:win": "powershell -ExecutionPolicy Bypass -File scripts/dev-windows.ps1",
+    "start:all": "powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1",
+    "start:all:force": "powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1 -ForceImport"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

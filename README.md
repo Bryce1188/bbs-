@@ -109,12 +109,26 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ```powershell
 cd "F:\0000 job\0000 软件工程"
-npm run dev
+npm run start:all
 ```
 
 访问：
 
 - [http://localhost:3000](http://localhost:3000)
+
+`start:all` 会自动执行：
+
+1. 检查 Node.js / npm
+2. 检查并尝试启动 MySQL 服务（如果已安装为 Windows 服务）
+3. 检测 MySQL 连通性
+4. 如发现数据库未初始化，自动导入 `mysql/bbs_mysql_all.sql`
+5. 启动论坛前端服务
+
+如果你需要强制重置数据库并重新导入 SQL：
+
+```powershell
+npm run start:all:force
+```
 
 ---
 
