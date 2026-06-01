@@ -28,6 +28,8 @@ const ERROR_TEXT: Record<string, string> = {
   report_failed: "举报提交失败，请稍后重试。"
 };
 
+const POST_IMAGE_MARKER = /\[\[POST_IMAGE:([^\]]+)\]\]/;
+
 export default async function PostDetailPage({
   params,
   searchParams
@@ -41,11 +43,15 @@ export default async function PostDetailPage({
   if (!detail?.board) notFound();
 
   const { post, author, board, replies, profiles, viewerHasLiked, viewerHasBookmarked } = detail;
+  const imageMatch = post.content.match(POST_IMAGE_MARKER);
+  const postImagePath = imageMatch?.[1]?.trim() || "";
+  const displayContent = post.content.replace(POST_IMAGE_MARKER, "").trim();
 
   return (
     <section className="section-shell">
       {notice && NOTICE_TEXT[notice] ? <PageAlert tone="success" message={NOTICE_TEXT[notice]} /> : null}
       {error && ERROR_TEXT[error] ? <PageAlert tone="error" message={ERROR_TEXT[error]} /> : null}
+
       <Card className="glass-panel overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -56,7 +62,9 @@ export default async function PostDetailPage({
               </Badge>
             ))}
           </div>
+
           <h1 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight tracking-normal">{post.title}</h1>
+
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <UserAvatar displayName={author.displayName} avatar={author.avatar} />
@@ -64,36 +72,52 @@ export default async function PostDetailPage({
                 <Link href={`/profile/${author.id}`} className="text-sm font-medium hover:text-primary">
                   {author.displayName}
                 </Link>
-                <p className="text-xs text-muted-foreground">{author.level} · {formatDate(post.createdAt)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {author.level} · {formatDate(post.createdAt)}
+                </p>
               </div>
             </div>
+
             <div className="flex flex-wrap gap-2">
               <form action={togglePostLikeAction}>
                 <input type="hidden" name="postId" value={post.id} />
-                <SubmitButton variant="glass" size="sm" pendingText="处理中…">
+                <SubmitButton variant="glass" size="sm" pendingText="处理中...">
                   <ThumbsUp className={`h-4 w-4 ${viewerHasLiked ? "fill-current" : ""}`} />
                   {formatNumber(post.likeCount)}
                 </SubmitButton>
               </form>
+
               <form action={toggleBookmarkAction}>
                 <input type="hidden" name="postId" value={post.id} />
-                <SubmitButton variant="glass" size="sm" pendingText="处理中…">
+                <SubmitButton variant="glass" size="sm" pendingText="处理中...">
                   <Star className={`h-4 w-4 ${viewerHasBookmarked ? "fill-current" : ""}`} />
                   收藏
                 </SubmitButton>
               </form>
+
               <form action={createReportAction}>
                 <input type="hidden" name="postId" value={post.id} />
                 <input type="hidden" name="reason" value="用户从主题详情页发起举报，请管理员复核内容质量。" />
-                <SubmitButton variant="glass" size="sm" pendingText="提交中…">
+                <SubmitButton variant="glass" size="sm" pendingText="提交中...">
                   <Flag className="h-4 w-4" />
                   举报
                 </SubmitButton>
               </form>
             </div>
           </div>
+
           <Separator className="my-6" />
-          <article className="max-w-3xl text-base leading-8 text-foreground/90">{post.content}</article>
+
+          <article className="max-w-3xl whitespace-pre-wrap text-base leading-8 text-foreground/90">{displayContent}</article>
+          {postImagePath ? (
+            <div className="mt-5">
+              <img
+                src={postImagePath}
+                alt="帖子图片"
+                className="max-h-[480px] w-auto max-w-full rounded-md border border-border/60 object-contain"
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -103,6 +127,7 @@ export default async function PostDetailPage({
             <h2 className="text-xl font-semibold">全部回复</h2>
             <Badge variant="outline">{replies.length} 条</Badge>
           </div>
+
           {replies.map((reply) => {
             const replyAuthor = profiles.find((profile) => profile.id === reply.authorId) ?? getAnonymousProfile();
             return (
@@ -123,22 +148,24 @@ export default async function PostDetailPage({
               </Card>
             );
           })}
+
           <Card className="glass-panel">
             <CardContent className="p-5">
               <form action={createReplyAction} className="grid gap-3">
                 <input type="hidden" name="postId" value={post.id} />
                 <label htmlFor="reply-content" className="flex items-center gap-2 font-semibold">
                   <MessageSquarePlus className="h-4 w-4" />
-                  发表回复
+                  发表评论
                 </label>
                 <Textarea id="reply-content" name="content" placeholder="写下你的回复" />
-                <SubmitButton className="justify-self-start" pendingText="提交中…">
+                <SubmitButton className="justify-self-start" pendingText="提交中...">
                   提交回复
                 </SubmitButton>
               </form>
             </CardContent>
           </Card>
         </div>
+
         <Card className="glass-panel h-fit">
           <CardContent className="p-5">
             <h3 className="font-semibold">主题数据</h3>
@@ -154,3 +181,4 @@ export default async function PostDetailPage({
     </section>
   );
 }
+

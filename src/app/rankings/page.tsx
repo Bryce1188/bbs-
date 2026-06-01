@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Flame, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getHotTopics, getProfiles } from "@/lib/data";
+import { getHotTopics, getRankingProfiles } from "@/lib/data";
 import { percent } from "@/lib/utils";
 
 export default async function RankingsPage() {
-  const [topPosts, profiles] = await Promise.all([getHotTopics(20), getProfiles()]);
+  const [topPosts, profiles] = await Promise.all([getHotTopics(20), getRankingProfiles()]);
   const rankedProfiles = [...profiles].sort((a, b) => b.points - a.points || a.displayName.localeCompare(b.displayName));
   const maxPoints = Math.max(1, ...rankedProfiles.map((profile) => profile.points));
 

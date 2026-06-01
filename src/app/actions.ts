@@ -1,5 +1,8 @@
 "use server";
 
+import { mkdir, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { extname, join } from "node:path";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -9,8 +12,30 @@ import { requireAdminAccess } from "@/lib/admin";
 import { emitToUser } from "@/lib/realtime/server";
 import { execute, isDatabaseConfigured, queryOne, withTransaction } from "@/lib/mysql";
 
+const MAX_POST_IMAGE_BYTES = 5 * 1024 * 1024;
+const POST_IMAGE_MARKER_PREFIX = "[[POST_IMAGE:";
+const POST_IMAGE_MARKER_SUFFIX = "]]";
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
 function text(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
+}
+
+function normalizeImageExtension(file: File) {
+  const byType: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif"
+  };
+  const fromType = byType[file.type];
+  if (fromType) return fromType;
+
+  const raw = extname(file.name).toLowerCase().replace(".", "");
+  if (["jpg", "jpeg", "png", "webp", "gif"].includes(raw)) {
+    return raw === "jpeg" ? "jpg" : raw;
+  }
+  return null;
 }
 
 function safeNextPath(value: string) {
@@ -32,7 +57,7 @@ function requireDatabase(path: string) {
 
 const signInSchema = z.object({
   account: z.string().email(),
-  password: z.string().min(6)
+  password: z.string().min(1)
 });
 
 const signUpSchema = z.object({
@@ -133,9 +158,8 @@ export async function updatePasswordAction(formData: FormData) {
 
 const postSchema = z.object({
   boardId: z.coerce.number().int().positive(),
-  title: z.string().min(4).max(120),
-  content: z.string().min(10).max(12000),
-  tags: z.string().max(160).optional()
+  title: z.string().min(1),
+  content: z.string().min(1)
 });
 
 export async function createPostAction(formData: FormData) {
@@ -143,17 +167,41 @@ export async function createPostAction(formData: FormData) {
   const parsed = postSchema.safeParse({
     boardId: formData.get("boardId"),
     title: text(formData.get("title")),
-    content: text(formData.get("content")),
-    tags: text(formData.get("tags"))
+    content: text(formData.get("content"))
   });
   if (!parsed.success) redirect("/publish?error=invalid_post");
 
   const user = await requireUser("/publish");
-  const tags = (parsed.data.tags ?? "")
+  const tags = ""
     .split(/[,，\s]+/)
     .map((tag) => tag.trim())
     .filter(Boolean)
     .slice(0, 8);
+  const imageFile = formData.get("image");
+  let imagePath: string | null = null;
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    if (!ALLOWED_IMAGE_TYPES.has(imageFile.type) || imageFile.size > MAX_POST_IMAGE_BYTES) {
+      redirect("/publish?error=invalid_post");
+    }
+
+    const ext = normalizeImageExtension(imageFile);
+    if (!ext) {
+      redirect("/publish?error=invalid_post");
+    }
+
+    const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
+    const uploadDir = join(process.cwd(), "public", "uploads", "posts");
+    const outputPath = join(uploadDir, fileName);
+    await mkdir(uploadDir, { recursive: true });
+    const bytes = Buffer.from(await imageFile.arrayBuffer());
+    await writeFile(outputPath, bytes);
+    imagePath = `/uploads/posts/${fileName}`;
+  }
+
+  const finalContent = imagePath
+    ? `${parsed.data.content}\n\n${POST_IMAGE_MARKER_PREFIX}${imagePath}${POST_IMAGE_MARKER_SUFFIX}`
+    : parsed.data.content;
 
   const postId = await withTransaction(async (conn) => {
     const [result] = await conn.execute(
@@ -164,9 +212,9 @@ export async function createPostAction(formData: FormData) {
       [
         parsed.data.boardId,
         user.id,
-        parsed.data.title,
+        parsed.data.title.slice(0, 120),
         parsed.data.content.replace(/\s+/g, " ").slice(0, 180),
-        parsed.data.content,
+        finalContent,
         JSON.stringify(tags)
       ]
     );

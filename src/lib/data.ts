@@ -300,6 +300,19 @@ export async function getAdminProfiles(): Promise<Profile[]> {
   return rows.map(mapProfile);
 }
 
+export async function getRankingProfiles(): Promise<Profile[]> {
+  if (!isDatabaseConfigured()) {
+    return fallback(profiles)
+      .filter((profile) => profile.role !== "admin")
+      .sort((a, b) => b.points - a.points || a.displayName.localeCompare(b.displayName));
+  }
+
+  const rows = await queryRows<ProfileRow>(
+    "select id,username,display_name,avatar_path,role,level_name,points,signature,created_at from profiles where role <> 'admin' order by points desc, display_name asc"
+  );
+  return rows.map(mapProfile);
+}
+
 export async function getProfile(id: string): Promise<Profile | undefined> {
   if (!isDatabaseConfigured()) {
     return fallback(profiles).find((profile) => profile.id === id);
