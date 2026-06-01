@@ -170,8 +170,15 @@ if (-not $needsImport) {
 }
 
 if ($needsImport) {
-  Write-Host "Importing mysql/bbs_mysql_all.sql ..."
-  Get-Content -Raw "mysql/bbs_mysql_all.sql" | & $mysqlExe --host=$dbHost --port=$dbPort --user=$dbUser
+  $schemaFile = (Resolve-Path "mysql/bbs_mysql_all.sql").Path
+  $seedFile = (Resolve-Path "mysql/seed_restore_data.sql").Path
+
+  Write-Host "Importing mysql/bbs_mysql_all.sql (schema, force mode) ..."
+  $schemaImportCmd = "`"$mysqlExe`" --default-character-set=utf8mb4 --force --host=$dbHost --port=$dbPort --user=$dbUser < `"$schemaFile`""
+  cmd /c $schemaImportCmd
+  Write-Host "Importing mysql/seed_restore_data.sql ..."
+  $seedImportCmd = "`"$mysqlExe`" --default-character-set=utf8mb4 --host=$dbHost --port=$dbPort --user=$dbUser < `"$seedFile`""
+  cmd /c $seedImportCmd
   if ($LASTEXITCODE -ne 0) {
     throw "SQL import failed."
   }

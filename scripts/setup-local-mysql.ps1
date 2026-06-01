@@ -18,6 +18,7 @@ function Require-Command($Name, $Hint) {
 Require-Command "node" "Install Node.js 20 or newer."
 Require-Command "npm" "Install Node.js 20 or newer."
 Require-Command "mysql" "Install MySQL client and ensure mysql is in PATH."
+$mysqlExe = (Get-Command "mysql" -ErrorAction Stop).Source
 
 npm install
 
@@ -38,8 +39,15 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 Set-Content -LiteralPath ".env.local" -Value $envLocal -Encoding UTF8
 
 if (-not $SkipImport) {
-  Write-Host "Importing mysql/bbs_mysql_all.sql ..."
-  Get-Content -Raw "mysql/bbs_mysql_all.sql" | mysql -h $Host -P $Port -u $User --password=$Password
+  $schemaFile = (Resolve-Path "mysql/bbs_mysql_all.sql").Path
+  $seedFile = (Resolve-Path "mysql/seed_restore_data.sql").Path
+
+  Write-Host "Importing mysql/bbs_mysql_all.sql (schema, force mode) ..."
+  $schemaImportCmd = "`"$mysqlExe`" --default-character-set=utf8mb4 --force -h $Host -P $Port -u $User --password=$Password < `"$schemaFile`""
+  cmd /c $schemaImportCmd
+  Write-Host "Importing mysql/seed_restore_data.sql ..."
+  $seedImportCmd = "`"$mysqlExe`" --default-character-set=utf8mb4 -h $Host -P $Port -u $User --password=$Password < `"$seedFile`""
+  cmd /c $seedImportCmd
 }
 
 Write-Host ""
