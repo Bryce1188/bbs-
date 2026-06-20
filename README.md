@@ -13,7 +13,7 @@
 - [页面与路由](#页面与路由)
 - [快速开始](#快速开始)
 - [环境变量](#环境变量)
-- [数据库设计](#数据库设计)
+- [数据库说明](#数据库说明)
 - [演示账号](#演示账号)
 - [项目目录](#项目目录)
 - [可用命令](#可用命令)
@@ -79,8 +79,8 @@
 | Next.js | 16.2.6，App Router |
 | React | 19.2.0 |
 | TypeScript | 5.9.3 |
-| MySQL | 推荐 MySQL Community Server 8.4 LTS，兼容 MySQL 8.x |
-| MySQL 驱动 | mysql2 3.15.3 |
+| MySQL | 开发机实际安装 MySQL Community Server 8.4.9 |
+| MySQL 驱动 | `package.json` 声明 `^3.15.3`，当前实际安装 3.22.4 |
 | Socket.IO | 4.8.1 |
 
 ### 前端与工程化
@@ -103,7 +103,7 @@ flowchart LR
     N --> P["页面与 Server Actions"]
     P --> A["认证与权限模块"]
     P --> D["数据访问层"]
-    D --> M[("MySQL 8.x")]
+    D --> M[("MySQL Community Server 8.4.9")]
     N <--> S["Socket.IO 服务"]
     S --> R["用户实时房间"]
     P --> F["public/uploads/posts"]
@@ -160,7 +160,7 @@ cd bbs-
 
 - Node.js 20+
 - npm
-- MySQL 8.0 或更高版本，推荐 MySQL 8.4 LTS
+- MySQL Community Server 8.4.9（本项目开发机实际安装版本）
 - Windows PowerShell
 
 可以使用以下命令检查版本：
@@ -269,97 +269,27 @@ SESSION_TTL_HOURS=72
 
 `.env.local` 已被 `.gitignore` 忽略，不应提交数据库密码或生产环境密钥。
 
-## 数据库设计
+## 数据库说明
 
-### 数据库信息
+详细的数据库安装、初始化、表结构、关系、存储过程、版本验证、备份恢复和排错说明，请查看：
+
+**[mysql/README.md](mysql/README.md)**
+
+### 数据库摘要
 
 | 项目 | 配置 |
 | --- | --- |
 | 数据库名称 | `bbs_mysql` |
-| 推荐版本 | MySQL 8.4 LTS |
-| 兼容版本 | MySQL 8.x |
+| 项目开发机实际安装版本 | MySQL Community Server 8.4.9 |
+| SQL 文件声明的适用范围 | MySQL 8.x |
 | 默认字符集 | `utf8mb4` |
 | 默认排序规则 | `utf8mb4_0900_ai_ci` |
 | 存储引擎 | InnoDB |
+| 数据库对象 | 22 张基础表、1 个视图、4 个存储过程 |
 | 建表脚本 | `mysql/bbs_mysql_all.sql` |
 | 演示数据 | `mysql/seed_restore_data.sql` |
 
-项目当前使用 MySQL 作为运行数据库。`supabase/` 目录保存早期迁移方案和历史 SQL，不是当前主分支运行所必需的数据库。
-
-### 数据关系
-
-```mermaid
-erDiagram
-    USERS_AUTH ||--|| PROFILES : owns
-    USERS_AUTH ||--o{ USER_SESSIONS : creates
-    USERS_AUTH ||--o{ PASSWORD_RESET_TOKENS : requests
-    PROFILES ||--o{ USER_ROLES : has
-    ROLES ||--o{ USER_ROLES : assigned
-    ROLES ||--o{ ROLE_PERMISSIONS : grants
-    PERMISSIONS ||--o{ ROLE_PERMISSIONS : contains
-    BOARDS ||--o{ POSTS : contains
-    PROFILES ||--o{ POSTS : writes
-    POSTS ||--o{ POST_REPLIES : receives
-    POSTS ||--o{ POST_REACTIONS : receives
-    POSTS ||--o{ BOOKMARKS : saved
-    PROFILES ||--o{ PRIVATE_MESSAGES : sends
-    PROFILES ||--o{ NOTIFICATIONS : receives
-    POSTS ||--o{ REPORTS : reported
-```
-
-### 数据表
-
-数据库共包含 22 张表和 1 个视图。
-
-| 表名 | 作用 | 主要关联 |
-| --- | --- | --- |
-| `users_auth` | 用户账号、邮箱和密码摘要 | 用户认证主表 |
-| `profiles` | 用户名、昵称、头像、等级、积分和签名 | `id` 关联 `users_auth.id` |
-| `roles` | 系统角色 | 被 `user_roles` 引用 |
-| `permissions` | 系统权限定义 | 被 `role_permissions` 引用 |
-| `role_permissions` | 角色与权限的多对多关系 | 关联 `roles`、`permissions` |
-| `user_roles` | 用户与角色的多对多关系 | 关联 `profiles`、`roles` |
-| `boards` | 论坛板块及统计信息 | 被帖子和公告引用 |
-| `posts` | 帖子正文、标签、状态和统计数据 | 关联 `boards`、`profiles` |
-| `post_replies` | 帖子回复 | 关联 `posts`、`profiles` |
-| `post_reactions` | 点赞等帖子互动记录 | 关联 `posts`、`profiles` |
-| `bookmarks` | 用户收藏记录 | 关联 `profiles`、`posts` |
-| `follows` | 用户关注关系 | 两端均关联 `profiles` |
-| `friendships` | 好友申请和处理状态 | 两端均关联 `profiles` |
-| `private_messages` | 私信、图片和已读状态 | 发送者和接收者关联 `profiles` |
-| `notifications` | 回复、好友、系统和举报通知 | 关联 `profiles` |
-| `reports` | 帖子举报及处理状态 | 关联举报用户和帖子 |
-| `notices` | 全站公告或板块公告 | 可关联 `boards` |
-| `checkins` | 每日签到和积分奖励 | 关联 `profiles` |
-| `grades` | 用户等级及最低积分要求 | 独立等级配置 |
-| `audit_logs` | 后台操作审计记录 | 操作者关联 `profiles` |
-| `user_sessions` | 登录会话和过期时间 | 关联 `users_auth` |
-| `password_reset_tokens` | 密码重置令牌 | 关联 `users_auth` |
-
-视图 `view_public_profiles` 只暴露允许公开展示的用户资料字段。
-
-### 存储过程
-
-全量 SQL 提供以下存储过程，用于封装常用事务操作：
-
-| 存储过程 | 作用 |
-| --- | --- |
-| `sp_create_post` | 创建帖子并更新板块统计 |
-| `sp_create_reply` | 创建回复并更新帖子回复数 |
-| `sp_toggle_post_reaction` | 切换帖子互动状态 |
-| `sp_toggle_bookmark` | 切换帖子收藏状态 |
-
-### 验证数据库
-
-进入 MySQL 后可以运行：
-
-```sql
-SHOW DATABASES;
-USE bbs_mysql;
-SHOW TABLES;
-SELECT COUNT(*) FROM users_auth;
-SELECT COUNT(*) FROM posts;
-```
+版本信息已通过本机 `mysql.exe --version` 和 `mysqld.exe --version` 核对。项目当前使用 MySQL 作为运行数据库；`supabase/` 目录保存早期迁移方案和历史 SQL，不是当前主分支运行所必需的数据库。
 
 ## 演示账号
 
@@ -383,6 +313,7 @@ SELECT COUNT(*) FROM posts;
 ```text
 .
 ├─ mysql/
+│  ├─ README.md                  # 独立数据库使用文档
 │  ├─ bbs_mysql_all.sql          # MySQL 全量结构和基础数据
 │  └─ seed_restore_data.sql      # 中文演示数据
 ├─ public/
