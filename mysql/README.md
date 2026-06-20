@@ -1,41 +1,21 @@
 # BBS 数据库说明
 
-本文档专门说明 BBS 星桥社区使用的数据库、真实版本、初始化方式、数据表、存储过程和日常维护方法。
+本项目使用 MySQL 保存用户、帖子、回复、私信、通知和后台管理等业务数据。
 
-## 1. 实际使用的数据库与版本
+## 1. 数据库环境
 
-| 项目 | 实际信息 |
+| 项目 | 配置 |
 | --- | --- |
 | 数据库产品 | MySQL Community Server（GPL） |
-| 本项目开发机安装版本 | **8.4.9** |
+| 数据库版本 | **8.4.9** |
 | 平台 | Win64 / x86_64 |
 | 数据库名称 | `bbs_mysql` |
-| MySQL Node.js 驱动声明 | `mysql2 ^3.15.3` |
-| 当前实际安装的驱动版本 | `mysql2 3.22.4` |
+| Node.js 数据库驱动 | `mysql2 3.22.4` |
 | 默认字符集 | `utf8mb4` |
 | 数据库默认排序规则 | `utf8mb4_0900_ai_ci` |
 | 表存储引擎 | InnoDB |
 
-上述版本不是推测值。2026 年 6 月 20 日在本项目开发环境中执行以下命令，`mysql.exe` 和 `mysqld.exe` 均返回 8.4.9：
-
-```powershell
-& "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" --version
-& "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe" --version
-```
-
-实际输出的版本核心信息为：
-
-```text
-Ver 8.4.9 for Win64 on x86_64 (MySQL Community Server - GPL)
-```
-
-当前 SQL 文件头部声明“适用版本：MySQL 8.x”。因此：
-
-- **项目实际开发环境版本：MySQL 8.4.9。**
-- **SQL 脚本声明的兼容范围：MySQL 8.x。**
-- 其他版本未在本文档中声明为已验证版本。
-
-生成本文档时，本机 `127.0.0.1:3306` 的数据库服务未运行，所以没有将无法在线验证的服务器状态写成事实。启动 MySQL 后，可按“版本与状态验证”章节查询当前连接实例。
+建表脚本使用 MySQL 8.x 语法，项目开发和测试使用 MySQL 8.4.9。
 
 ## 2. 文件说明
 
@@ -366,7 +346,7 @@ FLUSH PRIVILEGES;
 C:\Program Files\MySQL\MySQL Server 8.4\bin
 ```
 
-或者像本文档示例一样使用 `mysql.exe` 的完整路径。
+也可以在命令中直接使用 `mysql.exe` 的完整路径。
 
 ### 无法连接 `127.0.0.1:3306`
 

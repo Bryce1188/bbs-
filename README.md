@@ -79,8 +79,8 @@
 | Next.js | 16.2.6，App Router |
 | React | 19.2.0 |
 | TypeScript | 5.9.3 |
-| MySQL | 开发机实际安装 MySQL Community Server 8.4.9 |
-| MySQL 驱动 | `package.json` 声明 `^3.15.3`，当前实际安装 3.22.4 |
+| MySQL | MySQL Community Server 8.4.9 |
+| MySQL 驱动 | mysql2 3.22.4 |
 | Socket.IO | 4.8.1 |
 
 ### 前端与工程化
@@ -160,7 +160,7 @@ cd bbs-
 
 - Node.js 20+
 - npm
-- MySQL Community Server 8.4.9（本项目开发机实际安装版本）
+- MySQL Community Server 8.4.9
 - Windows PowerShell
 
 可以使用以下命令检查版本：
@@ -280,8 +280,8 @@ SESSION_TTL_HOURS=72
 | 项目 | 配置 |
 | --- | --- |
 | 数据库名称 | `bbs_mysql` |
-| 项目开发机实际安装版本 | MySQL Community Server 8.4.9 |
-| SQL 文件声明的适用范围 | MySQL 8.x |
+| 数据库版本 | MySQL Community Server 8.4.9 |
+| SQL 适用版本 | MySQL 8.x |
 | 默认字符集 | `utf8mb4` |
 | 默认排序规则 | `utf8mb4_0900_ai_ci` |
 | 存储引擎 | InnoDB |
@@ -289,7 +289,7 @@ SESSION_TTL_HOURS=72
 | 建表脚本 | `mysql/bbs_mysql_all.sql` |
 | 演示数据 | `mysql/seed_restore_data.sql` |
 
-版本信息已通过本机 `mysql.exe --version` 和 `mysqld.exe --version` 核对。项目当前使用 MySQL 作为运行数据库；`supabase/` 目录保存早期迁移方案和历史 SQL，不是当前主分支运行所必需的数据库。
+项目当前使用 MySQL 作为运行数据库。`supabase/` 目录保存早期迁移方案和历史 SQL，不是当前主分支运行所必需的数据库。
 
 ## 演示账号
 
